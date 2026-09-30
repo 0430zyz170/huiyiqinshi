@@ -1,0 +1,3676 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>回忆弥漫 · 信号不稳</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background: #0b0a0a;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Courier New', Courier, monospace;
+      overflow: hidden;
+      padding: 16px;
+    }
+
+    .game-container {
+      width: 100%;
+      max-width: 800px;
+      background: #11100e;
+      border: 1px solid #2a1f1a;
+      box-shadow: 0 0 40px rgba(120, 30, 30, 0.2), inset 0 0 60px rgba(0, 0, 0, 0.8);
+      padding: 28px 24px 36px;
+      border-radius: 2px;
+      position: relative;
+      transition: all 0.15s;
+      backdrop-filter: blur(1px);
+      background-image: 
+        radial-gradient(circle at 20% 30%, rgba(80, 20, 20, 0.08) 0%, transparent 30%),
+        radial-gradient(circle at 90% 70%, rgba(60, 10, 10, 0.1) 0%, transparent 40%),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.01) 0px, rgba(255, 255, 255, 0.01) 2px, transparent 2px, transparent 6px);
+    }
+
+    .glitch {
+      animation: glitchShake 0.12s infinite;
+    }
+
+    @keyframes glitchShake {
+      0% { transform: translate(0, 0) skew(0deg); }
+      25% { transform: translate(-3px, 2px) skew(1deg); }
+      50% { transform: translate(3px, -2px) skew(-1deg); }
+      75% { transform: translate(-2px, -1px) skew(0.5deg); }
+      100% { transform: translate(2px, 1px) skew(-0.5deg); }
+    }
+
+    .text-area {
+      min-height: 160px;
+      font-size: 1.25rem;
+      line-height: 1.9;
+      color: #c9b6a6;
+      text-shadow: 0 0 6px rgba(180, 60, 60, 0.5), 0 0 20px rgba(80, 0, 0, 0.7);
+      letter-spacing: 1px;
+      padding: 8px 0 20px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      position: relative;
+      z-index: 5;
+      transition: opacity 0.1s;
+      font-weight: 400;
+      border-bottom: 1px dashed #3a2820;
+      margin-bottom: 24px;
+      font-family: 'Courier New', Courier, monospace;
+    }
+
+    .text-area.unstable {
+      color: #d44a4a;
+      text-shadow: 0 0 10px #a00, 0 0 30px #500;
+      animation: textFlicker 0.08s infinite;
+    }
+
+    @keyframes textFlicker {
+      0% { opacity: 0.9; transform: translateX(0); }
+      50% { opacity: 0.5; transform: translateX(1px); }
+      100% { opacity: 0.8; transform: translateX(-1px); }
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+      z-index: 5;
+    }
+
+    .option-btn {
+      background: #1b1512;
+      border: 1px solid #3e2b24;
+      color: #b8a090;
+      padding: 16px 20px;
+      font-size: 1.05rem;
+      font-family: 'Courier New', Courier, monospace;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+      border-radius: 2px;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .option-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(180, 60, 60, 0.1), transparent);
+      transition: left 0.4s;
+    }
+
+    .option-btn:hover {
+      background: #261d18;
+      border-color: #8a3a3a;
+      color: #e0c0b0;
+      box-shadow: 0 0 18px rgba(180, 40, 40, 0.3), inset 0 0 20px rgba(80, 0, 0, 0.4);
+    }
+
+    .option-btn:hover::before {
+      left: 100%;
+    }
+
+    .option-btn:active {
+      transform: scale(0.98);
+      background: #0f0b09;
+    }
+
+    .option-btn.disabled {
+      opacity: 0.3;
+      pointer-events: none;
+      filter: grayscale(0.7);
+    }
+
+    .signal-bar {
+      margin-top: 26px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: #6a4f44;
+      letter-spacing: 2px;
+      border-top: 1px solid #2c1f1a;
+      padding-top: 12px;
+      font-family: 'Courier New', Courier, monospace;
+      text-transform: uppercase;
+    }
+
+    .signal-strength span {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #3a2a22;
+      margin-right: 4px;
+      border-radius: 1px;
+    }
+
+    .signal-strength span.active {
+      background: #a33;
+      box-shadow: 0 0 8px #c33;
+    }
+
+    .love-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      display: none;
+      overflow: hidden;
+      background: rgba(20, 0, 0, 0.15);
+      mix-blend-mode: screen;
+    }
+
+    .love-overlay.active {
+      display: block;
+    }
+
+    .love-word {
+      position: absolute;
+      color: #ff1a1a;
+      font-size: 2.6rem;
+      font-weight: bold;
+      font-family: 'Courier New', Courier, monospace;
+      text-shadow: 0 0 10px #f00, 0 0 30px #a00, 0 0 60px #500;
+      white-space: nowrap;
+      opacity: 0.85;
+      transform: rotate(var(--rot, 0deg));
+      animation: floatLove 0.8s infinite alternate ease-in-out;
+      pointer-events: none;
+      user-select: none;
+      letter-spacing: 6px;
+    }
+
+    @keyframes floatLove {
+      0% { opacity: 0.6; transform: rotate(var(--rot, 0deg)) scale(1); }
+      100% { opacity: 1; transform: rotate(var(--rot, 0deg)) scale(1.1); }
+    }
+
+    .unstable .text-area {
+      animation: textFlicker 0.1s infinite;
+    }
+
+    .unstable .option-btn {
+      border-color: #6a1a1a;
+      color: #b55;
+      text-shadow: 0 0 6px #a00;
+    }
+
+    .game-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.2) 0px, transparent 2px, transparent 4px);
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0.3;
+    }
+
+    /* 章节标记 */
+    .chapter-marker {
+      position: absolute;
+      top: 8px;
+      right: 16px;
+      font-size: 0.7rem;
+      color: #4a3028;
+      letter-spacing: 2px;
+      z-index: 15;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="love-overlay" id="loveOverlay"></div>
+
+  <div class="game-container" id="gameContainer">
+    <div class="chapter-marker" id="chapterMarker"></div>
+    <div class="text-area" id="textArea">
+      你记得张泽禹吗？
+    </div>
+
+    <div class="options" id="optionsContainer">
+      <button class="option-btn" data-option="A">A. 记得，他是很重要的人</button>
+      <button class="option-btn" data-option="B">B. 不记得，但这个名字让我心跳很快</button>
+      <button class="option-btn" data-option="C">C. 拒绝回答</button>
+    </div>
+
+    <div class="signal-bar">
+      <div>信号强度</div>
+      <div class="signal-strength" id="signalStrength">
+        <span class="active"></span>
+        <span class="active"></span>
+        <span class="active"></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ----- 游戏状态 -----
+      let currentChapter = 0;
+      let signalStability = 100;
+      let glitchTimer = null;
+      let isGlitching = false;
+      let gameContainer = document.getElementById('gameContainer');
+      let textArea = document.getElementById('textArea');
+      let optionsContainer = document.getElementById('optionsContainer');
+      let signalStrength = document.getElementById('signalStrength');
+      let loveOverlay = document.getElementById('loveOverlay');
+      let chapterMarker = document.getElementById('chapterMarker');
+
+      // 记录每条线是否已经触发过我爱你（避免重复过多）
+      let loveTriggeredLines = new Set();
+
+      // ----- 核心剧情数据 —— 大幅扩充，确保每条线都能触达我爱你 -----
+      const story = [
+        // 章节0 —— 初始
+        {
+          text: '你记得张泽禹吗？',
+          options: [
+            { id: 'A', label: 'A. 记得，他是很重要的人', next: 1 },
+            { id: 'B', label: 'B. 不记得，但这个名字让我心跳很快', next: 2 },
+            { id: 'C', label: 'C. 拒绝回答', next: 3 }
+          ]
+        },
+        // 章节1 —— 记得
+        {
+          text: '嗯。你记得。\n回忆像潮湿的墙皮，一块块往下掉。\n他曾经站在你身后，呼吸喷在你后颈。\n但你确定……那是他吗？',
+          options: [
+            { id: 'A', label: 'A. 我确定，就是他', next: 4 },
+            { id: 'B', label: 'B. 我……不确定', next: 5 },
+            { id: 'C', label: 'C. 那呼吸太冷了，不像活人', next: 6 }
+          ]
+        },
+        // 章节2 —— 不记得
+        {
+          text: '不记得？\n可你的心跳已经出卖了你。\n手腕上的红痕在发烫。\n他碰过那里，对吗？',
+          options: [
+            { id: 'A', label: 'A. 是，他碰过', next: 4 },
+            { id: 'B', label: 'B. 没有，我自己弄的', next: 5 },
+            { id: 'C', label: 'C. 红痕……现在还在发烫', next: 7 }
+          ]
+        },
+        // 章节3 —— 拒绝回答
+        {
+          text: '你不想说。\n但屏幕开始渗水，铁锈味越来越重。\n有些东西……不是你不说就能逃掉的。',
+          options: [
+            { id: 'A', label: 'A. 好吧，我说', next: 1 },
+            { id: 'B', label: 'B. 闭嘴', next: 8 },
+            { id: 'C', label: 'C. 你凭什么问我？', next: 9 }
+          ]
+        },
+        // 章节4 —— 确定是他
+        {
+          text: '你确定。\n那你知道他昨天用的是哪只眼睛看你吗？\n（信号开始不稳……）',
+          unstableText: '你确定。\n那你知道他昨天用的是哪只眼\n睛看你吗？\n（信号开始不稳……）',
+          options: [
+            { id: 'A', label: 'A. 左眼', next: 10, unstable: true },
+            { id: 'B', label: 'B. 右眼', next: 10, unstable: true },
+            { id: 'C', label: 'C. 他两只眼睛都……', next: 11, unstable: true }
+          ]
+        },
+        // 章节5 —— 不确定
+        {
+          text: '不确定就对了。\n因为你从来没有看清过他。\n他总是在你眨眼的时候换一副面孔。',
+          options: [
+            { id: 'A', label: 'A. 那我现在看清了', next: 10 },
+            { id: 'B', label: 'B. 我不想看清', next: 12 },
+            { id: 'C', label: 'C. 他到底有几张脸？', next: 11 }
+          ]
+        },
+        // 章节6 —— 呼吸太冷
+        {
+          text: '太冷了？\n因为他在水里泡太久了。\n你把他忘在水里。\n现在他爬回来了。',
+          options: [
+            { id: 'A', label: 'A. 我没有忘', next: 10 },
+            { id: 'B', label: 'B. 是他自己掉进去的', next: 12 },
+            { id: 'C', label: 'C. 他现在在哪里？', next: 13 }
+          ]
+        },
+        // 章节7 —— 红痕发烫
+        {
+          text: '红痕在发烫。\n那是他留下的记号。\n每一道痕，都是他说的一次“我爱你”。\n你数过吗？',
+          options: [
+            { id: 'A', label: 'A. 数过，十七道', next: 14 },
+            { id: 'B', label: 'B. 没数过', next: 15 },
+            { id: 'C', label: 'C. 我不想数', next: 15 }
+          ]
+        },
+        // 章节8 —— 闭嘴
+        {
+          text: '……\n你听见了吗？\n有人在敲键盘。\n那不是你的手。',
+          options: [
+            { id: 'A', label: 'A. 是谁？', next: 16 },
+            { id: 'B', label: 'B. 我不玩了', next: 17 },
+            { id: 'C', label: 'C. 是我的手，我在敲', next: 18 }
+          ]
+        },
+        // 章节9 —— 你凭什么
+        {
+          text: '凭我一直在看着你。\n从你打开这个页面开始。\n从你第一次想起他开始。\n从你出生开始。',
+          options: [
+            { id: 'A', label: 'A. 你到底是谁？', next: 16 },
+            { id: 'B', label: 'B. 你是张泽禹？', next: 19 },
+            { id: 'C', label: 'C. 我不信', next: 17 }
+          ]
+        },
+        // 章节10 —— 眼睛
+        {
+          text: '他笑了。\n你说对了。\n但那只眼睛……现在正贴在你的屏幕上。\n你往后退，它就跟上来。',
+          options: [
+            { id: 'A', label: 'A. 我不怕', next: 20 },
+            { id: 'B', label: 'B. 我怕', next: 21 },
+            { id: 'C', label: 'C. 我伸手摸了一下屏幕', next: 22 }
+          ]
+        },
+        // 章节11 —— 两只眼睛
+        {
+          text: '两只眼睛？\n不。\n他只有一只眼睛。\n另一只是你。',
+          options: [
+            { id: 'A', label: 'A. 什么意思？', next: 23 },
+            { id: 'B', label: 'B. 你疯了', next: 23 },
+            { id: 'C', label: 'C. 那我现在在看谁？', next: 24 }
+          ]
+        },
+        // 章节12 —— 不想看清
+        {
+          text: '你可以不看。\n但你不能不听。\n他一直在叫你的名字。\n从你出生的那天起。',
+          options: [
+            { id: 'A', label: 'A. 我听见了', next: 25 },
+            { id: 'B', label: 'B. 我什么都没听见', next: 25 },
+            { id: 'C', label: 'C. 他在叫什么名字？', next: 26 }
+          ]
+        },
+        // 章节13 —— 他现在在哪里
+        {
+          text: '他在你身后。\n在你呼吸的间隙里。\n在你眨眼的黑暗里。\n在你每一次犹豫的瞬间。',
+          options: [
+            { id: 'A', label: 'A. 我转身了', next: 27 },
+            { id: 'B', label: 'B. 我不转身', next: 27 },
+            { id: 'C', label: 'C. 我闭上眼睛', next: 28 }
+          ]
+        },
+        // 章节14 —— 十七道
+        {
+          text: '十七道。\n你数得很清楚。\n那你知道第十八道在哪里吗？\n在你看不见的地方。',
+          options: [
+            { id: 'A', label: 'A. 在哪里？', next: 29 },
+            { id: 'B', label: 'B. 我不想看', next: 29 },
+            { id: 'C', label: 'C. 在我后颈，对吗', next: 30 }
+          ]
+        },
+        // 章节15 —— 没数过/不想数
+        {
+          text: '没数过也没关系。\n他会帮你数。\n一道，两道，三道……\n直到你身上写满他的字。',
+          options: [
+            { id: 'A', label: 'A. 写满会怎样？', next: 29 },
+            { id: 'B', label: 'B. 我不会让他写', next: 30 },
+            { id: 'C', label: 'C. 已经写满了', next: 31 }
+          ]
+        },
+        // 章节16 —— 是谁
+        {
+          text: '是你自己。\n你一直在敲键盘。\n你以为你在选，其实你只是……在回忆。',
+          options: [
+            { id: 'A', label: 'A. 那我现在呢？', next: 32 },
+            { id: 'B', label: 'B. 我要出去', next: 32 },
+            { id: 'C', label: 'C. 我不想出去', next: 33 }
+          ]
+        },
+        // 章节17 —— 不玩了/不信
+        {
+          text: '太迟了。\n你已经进来了。\n回忆弥漫，到处都是他的味道。\n你闻不到吗？',
+          options: [
+            { id: 'A', label: 'A. 闻到了', next: 33 },
+            { id: 'B', label: 'B. 没有', next: 33 },
+            { id: 'C', label: 'C. 是铁锈和樟脑丸的味道', next: 34 }
+          ]
+        },
+        // 章节18 —— 是我的手
+        {
+          text: '你的手？\n那你低头看看。\n你的手还在键盘上吗？\n还是……已经伸进了屏幕里？',
+          options: [
+            { id: 'A', label: 'A. 我低头看了', next: 35 },
+            { id: 'B', label: 'B. 我不看', next: 35 },
+            { id: 'C', label: 'C. 屏幕里有另一双手', next: 36 }
+          ]
+        },
+        // 章节19 —— 你是张泽禹？
+        {
+          text: '……\n你终于叫出这个名字了。\n对，是我。\n我一直在等你叫我。',
+          options: [
+            { id: 'A', label: 'A. 你为什么在这里？', next: 37 },
+            { id: 'B', label: 'B. 你想干什么？', next: 37 },
+            { id: 'C', label: 'C. 我也一直在等你', next: 38 }
+          ]
+        },
+        // 章节20 —— 不怕
+        {
+          text: '不怕？\n那你的手为什么在抖？\n信号越来越差了。\n他快从屏幕里出来了。',
+          options: [
+            { id: 'A', label: 'A. 让他出来', next: 39 },
+            { id: 'B', label: 'B. 关掉屏幕', next: 39 },
+            { id: 'C', label: 'C. 我已经摸到他的手了', next: 40 }
+          ]
+        },
+        // 章节21 —— 怕
+        {
+          text: '怕就对了。\n你应该怕。\n但已经来不及了。\n他就在你身后。',
+          options: [
+            { id: 'A', label: 'A. 转身', next: 41 },
+            { id: 'B', label: 'B. 不转身', next: 41 },
+            { id: 'C', label: 'C. 我感觉到他的呼吸了', next: 42 }
+          ]
+        },
+        // 章节22 —— 摸屏幕
+        {
+          text: '你摸到了什么？\n冷的？湿的？\n还是……他的手指？\n他在屏幕那边，也在摸你。',
+          options: [
+            { id: 'A', label: 'A. 我摸到他的手指了', next: 43 },
+            { id: 'B', label: 'B. 我马上缩回手', next: 43 },
+            { id: 'C', label: 'C. 我不想缩回', next: 44 }
+          ]
+        },
+        // 章节23 —— 什么意思/疯了
+        {
+          text: '你是他的另一只眼睛。\n所以他才能一直看着你。\n你逃不掉的。\n你也不想逃，对吗？',
+          options: [
+            { id: 'A', label: 'A. 对', next: 45 },
+            { id: 'B', label: 'B. 不对', next: 45 },
+            { id: 'C', label: 'C. 我想逃，但脚动不了', next: 46 }
+          ]
+        },
+        // 章节24 —— 我在看谁
+        {
+          text: '你在看我。\n但你看的不是我。\n你看到的是你记忆里的张泽禹。\n那个你亲手造出来的他。',
+          options: [
+            { id: 'A', label: 'A. 我造出来的？', next: 47 },
+            { id: 'B', label: 'B. 他不是我造的', next: 47 },
+            { id: 'C', label: 'C. 那真正的他在哪里？', next: 48 }
+          ]
+        },
+        // 章节25 —— 听见/没听见
+        {
+          text: '他一直在叫你的名字。\n从你出生那天起。\n你只是……忘记了。\n现在，你想起来了吗？',
+          options: [
+            { id: 'A', label: 'A. 想起来了', next: 49 },
+            { id: 'B', label: 'B. 还没有', next: 49 },
+            { id: 'C', label: 'C. 他叫的是我的小名', next: 50 }
+          ]
+        },
+        // 章节26 —— 叫什么名字
+        {
+          text: '他叫的是……\n你第一次听见自己名字时的那个名字。\n你母亲给你取的名字。\n但你已经很久没听过了。',
+          options: [
+            { id: 'A', label: 'A. 我想听', next: 51 },
+            { id: 'B', label: 'B. 我不想听', next: 51 },
+            { id: 'C', label: 'C. 他怎么会知道？', next: 52 }
+          ]
+        },
+        // 章节27 —— 转身/不转身
+        {
+          text: '你转不转身都一样。\n他的手已经搭在你肩上了。\n湿的，黏的。\n像刚从水里捞出来。',
+          options: [
+            { id: 'A', label: 'A. 我回头', next: 53 },
+            { id: 'B', label: 'B. 我闭眼', next: 53 },
+            { id: 'C', label: 'C. 他的手很冰', next: 54 }
+          ]
+        },
+        // 章节28 —— 闭眼
+        {
+          text: '你闭上眼睛。\n但黑暗里更清楚。\n他的脸就在你眼皮后面。\n笑着。\n一直在笑。',
+          options: [
+            { id: 'A', label: 'A. 我睁开眼', next: 55 },
+            { id: 'B', label: 'B. 我不睁', next: 55 },
+            { id: 'C', label: 'C. 他的笑让我想哭', next: 56 }
+          ]
+        },
+        // 章节29 —— 在哪里/不想看
+        {
+          text: '第十八道在你的后颈。\n你伸手摸摸。\n是不是有一条新的？\n刚写上去的。',
+          options: [
+            { id: 'A', label: 'A. 我摸到了', next: 57 },
+            { id: 'B', label: 'B. 没有，什么都没有', next: 57 },
+            { id: 'C', label: 'C. 还在发烫', next: 58 }
+          ]
+        },
+        // 章节30 —— 后颈/不让他写
+        {
+          text: '对，后颈。\n他现在就在你身后。\n笔尖已经抵上去了。\n你感觉到了吗？',
+          options: [
+            { id: 'A', label: 'A. 感觉到了', next: 59 },
+            { id: 'B', label: 'B. 没有', next: 59 },
+            { id: 'C', label: 'C. 我想让他写', next: 60 }
+          ]
+        },
+        // 章节31 —— 已经写满了
+        {
+          text: '写满了？\n那你为什么还在这里？\n因为还有最后一道。\n他还没写。',
+          options: [
+            { id: 'A', label: 'A. 最后一道在哪里？', next: 61 },
+            { id: 'B', label: 'B. 我不想知道了', next: 61 },
+            { id: 'C', label: 'C. 在心上，对吗', next: 62 }
+          ]
+        },
+        // 章节32 —— 现在/出去
+        {
+          text: '你出不去。\n因为你就是回忆本身。\n他把你留在这里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 那他也在这里吗？', next: 63 },
+            { id: 'B', label: 'B. 我恨他', next: 63 },
+            { id: 'C', label: 'C. 我愿意留在这里', next: 64 }
+          ]
+        },
+        // 章节33 —— 不想出去/闻到了
+        {
+          text: '你闻到了。\n铁锈，樟脑丸，还有……\n一点点甜。\n那是他身上的味道。',
+          options: [
+            { id: 'A', label: 'A. 对，是甜的', next: 65 },
+            { id: 'B', label: 'B. 不，是腥的', next: 65 },
+            { id: 'C', label: 'C. 我想再闻一次', next: 66 }
+          ]
+        },
+        // 章节34 —— 铁锈和樟脑丸
+        {
+          text: '你记得很清楚。\n但你漏了一种味道。\n是血。\n你手上的血。',
+          options: [
+            { id: 'A', label: 'A. 我手上没有血', next: 67 },
+            { id: 'B', label: 'B. 我看看', next: 67 },
+            { id: 'C', label: 'C. 那是他的血', next: 68 }
+          ]
+        },
+        // 章节35 —— 低头看/不看
+        {
+          text: '你看了。\n你的手还在。\n但手腕上多了一圈红痕。\n刚刚还没有的。',
+          options: [
+            { id: 'A', label: 'A. 是他刚才握的', next: 69 },
+            { id: 'B', label: 'B. 是我自己弄的', next: 69 },
+            { id: 'C', label: 'C. 红痕在动', next: 70 }
+          ]
+        },
+        // 章节36 —— 另一双手
+        {
+          text: '你看见了吗？\n那双手在打字。\n打的是你的名字。\n一遍，一遍，又一遍。',
+          options: [
+            { id: 'A', label: 'A. 他在叫我', next: 71 },
+            { id: 'B', label: 'B. 他在控制我', next: 71 },
+            { id: 'C', label: 'C. 那双手是我的', next: 72 }
+          ]
+        },
+        // 章节37 —— 为什么/想干什么
+        {
+          text: '因为你想我了。\n你每天睡前都会想我。\n你只是不敢承认。\n现在你承认了。',
+          options: [
+            { id: 'A', label: 'A. 我承认', next: 73 },
+            { id: 'B', label: 'B. 我没有', next: 73 },
+            { id: 'C', label: 'C. 我每天都在想你', next: 74 }
+          ]
+        },
+        // 章节38 —— 我也一直在等你
+        {
+          text: '你等我？\n那你为什么现在才说？\n你让我等了太久。\n太久。\n现在，我要拿回我的时间。',
+          options: [
+            { id: 'A', label: 'A. 拿吧', next: 75 },
+            { id: 'B', label: 'B. 不要', next: 75 },
+            { id: 'C', label: 'C. 我的时间本来就是你的', next: 76 }
+          ]
+        },
+        // 章节39 —— 让他出来/关掉
+        {
+          text: '他已经在你面前了。\n你看见了吗？\n那个红。\n到处都是。',
+          options: [
+            { id: 'A', label: 'A. 我看见了', next: 77 },
+            { id: 'B', label: 'B. 我什么都看不见', next: 77 },
+            { id: 'C', label: 'C. 好红……好多的我爱你', next: 78 }
+          ]
+        },
+        // 章节40 —— 摸到他的手
+        {
+          text: '你摸到了。\n他的手很冷，但掌心是热的。\n他在你手心写了一个字。\n你猜是什么？',
+          options: [
+            { id: 'A', label: 'A. 爱', next: 79 },
+            { id: 'B', label: 'B. 我', next: 79 },
+            { id: 'C', label: 'C. 逃', next: 80 }
+          ]
+        },
+        // 章节41 —— 转身/不转身
+        {
+          text: '你转了。\n什么都没有。\n但当你转回来的时候——\n屏幕上多了一行字。',
+          options: [
+            { id: 'A', label: 'A. 什么字？', next: 81 },
+            { id: 'B', label: 'B. 我不看', next: 81 },
+            { id: 'C', label: 'C. 是“我爱你”', next: 82 }
+          ]
+        },
+        // 章节42 —— 感觉到呼吸
+        {
+          text: '呼吸越来越近了。\n就在你耳边。\n他说了一句话。\n你听见了吗？',
+          options: [
+            { id: 'A', label: 'A. 听见了', next: 83 },
+            { id: 'B', label: 'B. 没有', next: 83 },
+            { id: 'C', label: 'C. 他说的是“我爱你”', next: 84 }
+          ]
+        },
+        // 章节43 —— 摸到手指/缩回
+        {
+          text: '你摸到了。\n他的手指扣住了你的。\n很紧。\n你挣不开的。',
+          options: [
+            { id: 'A', label: 'A. 我不想挣开', next: 85 },
+            { id: 'B', label: 'B. 我用力挣开', next: 85 },
+            { id: 'C', label: 'C. 他的手指在发抖', next: 86 }
+          ]
+        },
+        // 章节44 —— 不想缩回
+        {
+          text: '你不想缩回。\n因为你等了太久。\n他也等了太久。\n现在，你们终于碰到彼此了。',
+          options: [
+            { id: 'A', label: 'A. 对，终于', next: 87 },
+            { id: 'B', label: 'B. 可是好冷', next: 87 },
+            { id: 'C', label: 'C. 我想一直这样', next: 88 }
+          ]
+        },
+        // 章节45 —— 对/不对
+        {
+          text: '不管对不对。\n他都爱你。\n用你受不了的方式。\n用你逃不掉的方式。',
+          options: [
+            { id: 'A', label: 'A. 我知道', next: 89 },
+            { id: 'B', label: 'B. 我不想知道', next: 89 },
+            { id: 'C', label: 'C. 我也是', next: 90 }
+          ]
+        },
+        // 章节46 —— 脚动不了
+        {
+          text: '脚动不了？\n因为地上长出了手。\n很多手。\n都在拉你。\n拉你下去。',
+          options: [
+            { id: 'A', label: 'A. 我往下看', next: 91 },
+            { id: 'B', label: 'B. 我不看', next: 91 },
+            { id: 'C', label: 'C. 那些手在说“我爱你”', next: 92 }
+          ]
+        },
+        // 章节47 —— 造出来的/不是
+        {
+          text: '你造的。\n你用回忆造了他。\n用思念造了他。\n用你不敢说出口的那些话，造了他。',
+          options: [
+            { id: 'A', label: 'A. 那我为什么怕他？', next: 93 },
+            { id: 'B', label: 'B. 我不怕他', next: 93 },
+            { id: 'C', label: 'C. 因为他也造了我', next: 94 }
+          ]
+        },
+        // 章节48 —— 真正的他在哪里
+        {
+          text: '真正的他？\n他就在你面前。\n一直都在。\n你只是不肯认。\n现在，你认吗？',
+          options: [
+            { id: 'A', label: 'A. 我认', next: 95 },
+            { id: 'B', label: 'B. 我不认', next: 95 },
+            { id: 'C', label: 'C. 我不敢认', next: 96 }
+          ]
+        },
+        // 章节49 —— 想起来了/还没有
+        {
+          text: '没关系。\n他会一直叫。\n直到你想起来为止。\n直到你叫出他的名字。',
+          options: [
+            { id: 'A', label: 'A. 张泽禹', next: 97 },
+            { id: 'B', label: 'B. 我不叫', next: 97 },
+            { id: 'C', label: 'C. 张泽禹，张泽禹，张泽禹', next: 98 }
+          ]
+        },
+        // 章节50 —— 小名
+        {
+          text: '对，是小名。\n你母亲叫你的时候，他就在旁边。\n他记住了。\n他比你自己记得还清楚。',
+          options: [
+            { id: 'A', label: 'A. 他怎么会在我母亲旁边？', next: 99 },
+            { id: 'B', label: 'B. 他一直都在', next: 99 },
+            { id: 'C', label: 'C. 他是我什么人？', next: 100 }
+          ]
+        },
+        // 章节51 —— 想听/不想听
+        {
+          text: '他想让你听。\n但他叫不出来了。\n他的声音在水里泡烂了。\n所以你只能看。\n看这些字。',
+          options: [
+            { id: 'A', label: 'A. 我看到了', next: 101 },
+            { id: 'B', label: 'B. 我不想看', next: 101 },
+            { id: 'C', label: 'C. 这些字在动', next: 102 }
+          ]
+        },
+        // 章节52 —— 他怎么会知道
+        {
+          text: '因为他一直在你身边。\n从你出生那天起。\n他看着你长大。\n看着你忘记他。\n看着你现在又想起他。',
+          options: [
+            { id: 'A', label: 'A. 我从来没有忘记', next: 103 },
+            { id: 'B', label: 'B. 我确实忘了', next: 103 },
+            { id: 'C', label: 'C. 你现在在哪里？', next: 104 }
+          ]
+        },
+        // 章节53 —— 回头/闭眼
+        {
+          text: '你看到了。\n他的脸。\n苍白的，湿的。\n但他在笑。\n笑得很好看。',
+          options: [
+            { id: 'A', label: 'A. 他很好看', next: 105 },
+            { id: 'B', label: 'B. 他变了', next: 105 },
+            { id: 'C', label: 'C. 他还是我记忆里的样子', next: 106 }
+          ]
+        },
+        // 章节54 —— 手很冰
+        {
+          text: '冰。\n因为他在水里太久了。\n但他会暖起来的。\n只要你握紧他。',
+          options: [
+            { id: 'A', label: 'A. 我握紧了', next: 107 },
+            { id: 'B', label: 'B. 我不敢握', next: 107 },
+            { id: 'C', label: 'C. 他的手在变暖', next: 108 }
+          ]
+        },
+        // 章节55 —— 睁开/不睁
+        {
+          text: '你睁开眼了。\n他不在你面前。\n但在屏幕上。\n整屏都是他。\n整屏都是“我爱你”。',
+          options: [
+            { id: 'A', label: 'A. 我看到了', next: 109 },
+            { id: 'B', label: 'B. 太多了……', next: 109 },
+            { id: 'C', label: 'C. 我想一直看着', next: 110 }
+          ]
+        },
+        // 章节56 —— 想哭
+        {
+          text: '哭吧。\n你的眼泪掉在屏幕上。\n和他的眼泪混在一起。\n你们终于又在一起了。',
+          options: [
+            { id: 'A', label: 'A. 对，在一起了', next: 111 },
+            { id: 'B', label: 'B. 我不想哭', next: 111 },
+            { id: 'C', label: 'C. 眼泪是红的', next: 112 }
+          ]
+        },
+        // 章节57 —— 摸到了/没有
+        {
+          text: '你摸到了。\n第十八道痕。\n温热的，凸起的。\n他刚刚写上去的。\n他说了什么？',
+          options: [
+            { id: 'A', label: 'A. 他说“我爱你”', next: 113 },
+            { id: 'B', label: 'B. 他说“别忘了我”', next: 113 },
+            { id: 'C', label: 'C. 他说“留下来”', next: 114 }
+          ]
+        },
+        // 章节58 —— 还在发烫
+        {
+          text: '发烫就对了。\n那是他的温度。\n他把自己刻进你皮肤里了。\n你永远带着他。',
+          options: [
+            { id: 'A', label: 'A. 我愿意', next: 115 },
+            { id: 'B', label: 'B. 我想去掉', next: 115 },
+            { id: 'C', label: 'C. 再多刻几道', next: 116 }
+          ]
+        },
+        // 章节59 —— 感觉到了/没有
+        {
+          text: '笔尖划下去了。\n第十九道。\n你抖了一下。\n但他按住了你。\n不让你逃。',
+          options: [
+            { id: 'A', label: 'A. 我不逃', next: 117 },
+            { id: 'B', label: 'B. 我用力挣扎', next: 117 },
+            { id: 'C', label: 'C. 他的手指好用力', next: 118 }
+          ]
+        },
+        // 章节60 —— 想让他写
+        {
+          text: '你想让他写。\n那就别动。\n他会写得很慢。\n很痛。\n但你会喜欢的。',
+          options: [
+            { id: 'A', label: 'A. 我喜欢', next: 119 },
+            { id: 'B', label: 'B. 我不喜欢', next: 119 },
+            { id: 'C', label: 'C. 写吧', next: 120 }
+          ]
+        },
+        // 章节61 —— 最后一道在哪里/不想知道
+        {
+          text: '最后一道在眼睛里。\n他要看着你的眼睛写。\n让你看着他写。\n你准备好了吗？',
+          options: [
+            { id: 'A', label: 'A. 准备好了', next: 121 },
+            { id: 'B', label: 'B. 没有', next: 121 },
+            { id: 'C', label: 'C. 他已经开始写了', next: 122 }
+          ]
+        },
+        // 章节62 —— 在心上
+        {
+          text: '对，在心上。\n但他够不到。\n所以你要帮他。\n把心捧出来。\n给他。',
+          options: [
+            { id: 'A', label: 'A. 我捧出来了', next: 123 },
+            { id: 'B', label: 'B. 我做不到', next: 123 },
+            { id: 'C', label: 'C. 他已经把手伸进来了', next: 124 }
+          ]
+        },
+        // 章节63 —— 他也在这里/我恨他
+        {
+          text: '他在。\n他一直在。\n在你每一次呼吸里。\n在你每一次心跳里。\n他无处不在。',
+          options: [
+            { id: 'A', label: 'A. 那我也在', next: 125 },
+            { id: 'B', label: 'B. 我想逃', next: 125 },
+            { id: 'C', label: 'C. 我们永远在一起', next: 126 }
+          ]
+        },
+        // 章节64 —— 愿意留下
+        {
+          text: '你愿意。\n那就留下来。\n永远留下来。\n他会在每一个夜晚陪你。\n在每一个噩梦里抱你。',
+          options: [
+            { id: 'A', label: 'A. 好', next: 127 },
+            { id: 'B', label: 'B. 不', next: 127 },
+            { id: 'C', label: 'C. 我已经在这里了', next: 128 }
+          ]
+        },
+        // 章节65 —— 甜的/腥的
+        {
+          text: '不管是甜的还是腥的。\n那都是他的味道。\n你闻了太久。\n已经分不清了。\n就像你分不清回忆和现在。',
+          options: [
+            { id: 'A', label: 'A. 我不想分', next: 129 },
+            { id: 'B', label: 'B. 我想分清楚', next: 129 },
+            { id: 'C', label: 'C. 现在就是回忆', next: 130 }
+          ]
+        },
+        // 章节66 —— 想再闻一次
+        {
+          text: '再闻一次。\n深吸一口气。\n他就在你鼻腔里。\n在你的肺里。\n在你的血液里。',
+          options: [
+            { id: 'A', label: 'A. 我吸了', next: 131 },
+            { id: 'B', label: 'B. 我喘不过气', next: 131 },
+            { id: 'C', label: 'C. 他在我身体里', next: 132 }
+          ]
+        },
+        // 章节67 —— 没有血/看看
+        {
+          text: '你看了。\n手上有血。\n不是你的。\n是他的。\n他在你手上写了字。',
+          options: [
+            { id: 'A', label: 'A. 什么字？', next: 133 },
+            { id: 'B', label: 'B. 我不看', next: 133 },
+            { id: 'C', label: 'C. 是“我爱你”', next: 134 }
+          ]
+        },
+        // 章节68 —— 他的血
+        {
+          text: '对，他的血。\n他为你流的。\n流了很多。\n你手上这些……只是一小部分。',
+          options: [
+            { id: 'A', label: 'A. 他为我流的？', next: 135 },
+            { id: 'B', label: 'B. 我不值得', next: 135 },
+            { id: 'C', label: 'C. 我要更多', next: 136 }
+          ]
+        },
+        // 章节69 —— 他握的/自己弄的
+        {
+          text: '不管是谁弄的。\n红痕都是他的记号。\n他在你身上写了十七遍“我爱你”。\n现在第十八遍。',
+          options: [
+            { id: 'A', label: 'A. 第十八遍在哪里？', next: 137 },
+            { id: 'B', label: 'B. 我不要了', next: 137 },
+            { id: 'C', label: 'C. 我数着呢', next: 138 }
+          ]
+        },
+        // 章节70 —— 红痕在动
+        {
+          text: '它在动。\n像一条红线。\n从手腕爬到手臂。\n爬到肩膀。\n爬到脖子。\n最后停在你唇上。',
+          options: [
+            { id: 'A', label: 'A. 它要干什么？', next: 139 },
+            { id: 'B', label: 'B. 我舔了一下', next: 139 },
+            { id: 'C', label: 'C. 是甜的', next: 140 }
+          ]
+        },
+        // 章节71 —— 叫我/控制我
+        {
+          text: '都在。\n他在叫你。\n也在控制你。\n因为你本来就是他的。\n你的一切都是他的。',
+          options: [
+            { id: 'A', label: 'A. 我是他的', next: 141 },
+            { id: 'B', label: 'B. 我不是', next: 141 },
+            { id: 'C', label: 'C. 我想是他的', next: 142 }
+          ]
+        },
+        // 章节72 —— 那双手是我的
+        {
+          text: '你的？\n那你为什么控制不了？\n它们在打“我爱你”。\n一遍又一遍。\n你想停也停不下来。',
+          options: [
+            { id: 'A', label: 'A. 我不想停', next: 143 },
+            { id: 'B', label: 'B. 我想停', next: 143 },
+            { id: 'C', label: 'C. 打得越多越好', next: 144 }
+          ]
+        },
+        // 章节73 —— 承认/没有
+        {
+          text: '你承认了。\n那就好。\n他等的就是你这句话。\n现在，他要来了。\n你感觉到了吗？',
+          options: [
+            { id: 'A', label: 'A. 感觉到了', next: 145 },
+            { id: 'B', label: 'B. 没有', next: 145 },
+            { id: 'C', label: 'C. 他已经在门口了', next: 146 }
+]
+        },
+        // 章节74 —— 每天都在想你
+        {
+          text: '你每天都在想他。\n他都知道。\n他每天都在看着你想他。\n他很开心。\n开心得想哭。',
+          options: [
+            { id: 'A', label: 'A. 那让他哭', next: 147 },
+            { id: 'B', label: 'B. 我不想让他哭', next: 147 },
+            { id: 'C', label: 'C. 他的眼泪是红的', next: 148 }
+          ]
+        },
+        // 章节75 —— 拿吧/不要
+        {
+          text: '他拿走了。\n你的一部分时间。\n你的一部分呼吸。\n你的一部分心跳。\n现在，你和他一样了。',
+          options: [
+            { id: 'A', label: 'A. 我愿意', next: 149 },
+            { id: 'B', label: 'B. 还给我', next: 149 },
+            { id: 'C', label: 'C. 再多拿一点', next: 150 }
+          ]
+        },
+        // 章节76 —— 我的时间本来就是你的
+        {
+          text: '对。\n你的时间是他的。\n你的回忆是他的。\n你的身体也是他的。\n你的一切都是他的。',
+          options: [
+            { id: 'A', label: 'A. 对', next: 151 },
+            { id: 'B', label: 'B. 不对', next: 151 },
+            { id: 'C', label: 'C. 但我还是我自己', next: 152 }
+          ]
+        },
+        // 章节77 —— 看见了/看不见
+        {
+          text: '不管你看没看见。\n红都在那里。\n“我爱你”都在那里。\n它们会一直飘。\n直到你闭上眼。',
+          options: [
+            { id: 'A', label: 'A. 我不想闭眼', next: 153 },
+            { id: 'B', label: 'B. 我闭上了', next: 153 },
+            { id: 'C', label: 'C. 闭上眼也看得见', next: 154 }
+          ]
+        },
+        // 章节78 —— 好红
+        {
+          text: '好红。\n像血。\n像他的眼睛。\n像你第一次见他时，他眼里的光。\n现在那光变成了红色。',
+          options: [
+            { id: 'A', label: 'A. 我喜欢红色', next: 155 },
+            { id: 'B', label: 'B. 我讨厌红色', next: 155 },
+            { id: 'C', label: 'C. 红色在叫我', next: 156 }
+          ]
+        },
+        // 章节79 —— 爱/我
+        {
+          text: '不对。\n他写的是“逃”。\n但他不是让你逃。\n是让你带他一起逃。\n你愿意吗？',
+          options: [
+            { id: 'A', label: 'A. 愿意', next: 157 },
+            { id: 'B', label: 'B. 不愿意', next: 157 },
+            { id: 'C', label: 'C. 我们一起逃', next: 158 }
+          ]
+        },
+        // 章节80 —— 逃
+        {
+          text: '你猜对了。\n但他逃不了。\n他被困在这里。\n困在你的回忆里。\n只有你能放他出来。',
+          options: [
+            { id: 'A', label: 'A. 我怎么放？', next: 159 },
+            { id: 'B', label: 'B. 我不想放', next: 159 },
+            { id: 'C', label: 'C. 用我的眼睛', next: 160 }
+          ]
+        },
+        // 章节81 —— 什么字/不看
+        {
+          text: '你不看也得看。\n字在往你眼睛里钻。\n一个一个字。\n“我”“爱”“你”。\n三个字，重复了无数遍。',
+          options: [
+            { id: 'A', label: 'A. 我看到了', next: 161 },
+            { id: 'B', label: 'B. 太多了', next: 161 },
+            { id: 'C', label: 'C. 不够', next: 162 }
+          ]
+        },
+        // 章节82 —— 是“我爱你”
+        {
+          text: '对。\n满屏的“我爱你”。\n每一句都是他说的。\n每一句都是真的。\n每一句都让你喘不过气。',
+          options: [
+            { id: 'A', label: 'A. 我也爱你', next: 163 },
+            { id: 'B', label: 'B. 我不爱你', next: 163 },
+            { id: 'C', label: 'C. 我一直都爱你', next: 164 }
+          ]
+        },
+        // 章节83 —— 听见了/没有
+        {
+          text: '他说了。\n很轻。\n像水一样。\n“我爱你”。\n你听见了，对吗？',
+          options: [
+            { id: 'A', label: 'A. 听见了', next: 165 },
+            { id: 'B', label: 'B. 没听见', next: 165 },
+            { id: 'C', label: 'C. 我想再听一次', next: 166 }
+          ]
+        },
+        // 章节84 —— 他说的是“我爱你”
+        {
+          text: '对。\n他说的就是这句话。\n他练了很久。\n在水里练的。\n练到嗓子烂了。',
+          options: [
+            { id: 'A', label: 'A. 不要再说了', next: 167 },
+            { id: 'B', label: 'B. 继续说', next: 167 },
+            { id: 'C', label: 'C. 我心疼他', next: 168 }
+          ]
+        },
+        // 章节85 —— 不想挣开/用力挣开
+        {
+          text: '挣不开的。\n他的手指扣得很紧。\n像在水里抓住最后一根稻草。\n你就是他的稻草。',
+          options: [
+            { id: 'A', label: 'A. 那我让他抓', next: 169 },
+            { id: 'B', label: 'B. 我不要当稻草', next: 169 },
+            { id: 'C', label: 'C. 我也抓住他', next: 170 }
+          ]
+        },
+        // 章节86 —— 手指在发抖
+        {
+          text: '他在发抖。\n因为他怕你消失。\n你已经消失过一次了。\n他不能再失去你。',
+          options: [
+            { id: 'A', label: 'A. 我不会消失', next: 171 },
+            { id: 'B', label: 'B. 我可能会', next: 171 },
+            { id: 'C', label: 'C. 我不会再忘了他', next: 172 }
+          ]
+        },
+        // 章节87 —— 终于/可是好冷
+        {
+          text: '冷也没关系。\n他会暖的。\n只要你一直握着。\n一直握着。\n永远不松手。',
+          options: [
+            { id: 'A', label: 'A. 永远不松', next: 173 },
+            { id: 'B', label: 'B. 我做不到永远', next: 173 },
+            { id: 'C', label: 'C. 他已经暖了', next: 174 }
+          ]
+        },
+        // 章节88 —— 想一直这样
+        {
+          text: '你会一直这样的。\n因为时间在这里没有意义。\n你们可以永远握着手。\n永远。\n直到屏幕熄灭。',
+          options: [
+            { id: 'A', label: 'A. 那让它熄灭吧', next: 175 },
+            { id: 'B', label: 'B. 不要熄灭', next: 175 },
+            { id: 'C', label: 'C. 屏幕已经黑了', next: 176 }
+          ]
+        },
+        // 章节89 —— 我知道/不想知道
+        {
+          text: '你知道就好。\n他不需要你知道。\n他只需要你在这里。\n在这里，在他身边。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 我在这里', next: 177 },
+            { id: 'B', label: 'B. 我不在这里', next: 177 },
+            { id: 'C', label: 'C. 我一直在这里', next: 178 }
+          ]
+        },
+        // 章节90 —— 我也是
+        {
+          text: '你也是？\n那你为什么现在才说？\n他等了太久。\n等到身体都泡烂了。\n等到眼睛都泡白了。',
+          options: [
+            { id: 'A', label: 'A. 对不起', next: 179 },
+            { id: 'B', label: 'B. 我不说对不起', next: 179 },
+            { id: 'C', label: 'C. 我现在说也不晚', next: 180 }
+          ]
+        },
+        // 章节91 —— 往下看/不看
+        {
+          text: '你看了。\n地上全是手。\n苍白的，湿的。\n每一只都在伸向你。\n每一只都在说“我爱你”。',
+          options: [
+            { id: 'A', label: 'A. 我踩上去了', next: 181 },
+            { id: 'B', label: 'B. 我往后退', next: 181 },
+            { id: 'C', label: 'C. 它们抓住了我的脚', next: 182 }
+          ]
+        },
+        // 章节92 —— 那些手在说“我爱你”
+        {
+          text: '它们都在说。\n一遍又一遍。\n从地下传来。\n闷闷的，湿湿的。\n像他泡在水里的声音。',
+          options: [
+            { id: 'A', label: 'A. 我想听清楚', next: 183 },
+            { id: 'B', label: 'B. 我不想听', next: 183 },
+            { id: 'C', label: 'C. 我蹲下去了', next: 184 }
+          ]
+        },
+        // 章节93 —— 为什么怕/不怕
+        {
+          text: '因为你造的他，比你更了解你自己。\n他知道你所有的秘密。\n包括你不想承认的那些。\n包括你爱他这件事。',
+          options: [
+            { id: 'A', label: 'A. 我爱他', next: 185 },
+            { id: 'B', label: 'B. 我不爱他', next: 185 },
+            { id: 'C', label: 'C. 我一直都爱他', next: 186 }
+          ]
+        },
+        // 章节94 —— 他也造了我
+        {
+          text: '对。\n他造了你。\n在回忆里造了你。\n你们互相造。\n互相困。\n互相爱。',
+          options: [
+            { id: 'A', label: 'A. 那就互相困着吧', next: 187 },
+            { id: 'B', label: 'B. 我想出去', next: 187 },
+            { id: 'C', label: 'C. 我们分不开了', next: 188 }
+          ]
+        },
+        // 章节95 —— 认/不认
+        {
+          text: '不管认不认。\n他都在。\n他都在你面前。\n都在你耳边。\n都在你心里。',
+          options: [
+            { id: 'A', label: 'A. 我知道', next: 189 },
+            { id: 'B', label: 'B. 我要把他赶出去', next: 189 },
+            { id: 'C', label: 'C. 他已经是我的一部分了', next: 190 }
+          ]
+        },
+        // 章节96 —— 不敢认
+        {
+          text: '不敢也要认。\n因为他已经认了你。\n他在水里叫了你的名字一千遍。\n一万遍。\n你听见了吗？',
+          options: [
+            { id: 'A', label: 'A. 听见了', next: 191 },
+            { id: 'B', label: 'B. 没有', next: 191 },
+            { id: 'C', label: 'C. 现在听见了', next: 192 }
+          ]
+        },
+        // 章节97 —— 张泽禹/不叫
+        {
+          text: '你叫了。\n他笑了。\n他从屏幕里伸出手。\n他的手很白。\n白得像纸。',
+          options: [
+            { id: 'A', label: 'A. 我握住他的手', next: 193 },
+            { id: 'B', label: 'B. 我往后退', next: 193 },
+            { id: 'C', label: 'C. 他的手穿过了我的胸口', next: 194 }
+          ]
+        },
+        // 章节98 —— 张泽禹x3
+        {
+          text: '你叫了三遍。\n他哭了。\n红色的眼泪。\n滴在屏幕上。\n滴在你手上。\n烫的。',
+          options: [
+            { id: 'A', label: 'A. 好烫', next: 195 },
+            { id: 'B', label: 'B. 我喜欢这个温度', next: 195 },
+            { id: 'C', label: 'C. 我也哭了', next: 196 }
+          ]
+        },
+        // 章节99 —— 他怎么会在我母亲旁边/一直都在
+        {
+          text: '他在。\n他一直在。\n在你出生之前就在。\n他是你的影子。\n你是他的光。',
+          options: [
+            { id: 'A', label: 'A. 那他现在在哪里？', next: 197 },
+            { id: 'B', label: 'B. 他为什么是影子？', next: 197 },
+            { id: 'C', label: 'C. 我想见他', next: 198 }
+          ]
+        },
+        // 章节100 —— 他是我什么人
+        {
+          text: '他是你什么人？\n他是你的回忆。\n你的思念。\n你的恐惧。\n你的爱。\n他是你的一切。',
+          options: [
+            { id: 'A', label: 'A. 我的一切', next: 199 },
+            { id: 'B', label: 'B. 太沉重了', next: 199 },
+            { id: 'C', label: 'C. 我愿意承受', next: 200 }
+          ]
+        },
+        // 章节101 —— 看到了/不想看
+        {
+          text: '你看到了。\n这些字在流血。\n红色的。\n一滴一滴。\n滴在你的屏幕上。',
+          options: [
+            { id: 'A', label: 'A. 我擦掉了', next: 201 },
+            { id: 'B', label: 'B. 我不擦', next: 201 },
+            { id: 'C', label: 'C. 越流越多', next: 202 }
+          ]
+        },
+        // 章节102 —— 这些字在动
+        {
+          text: '它们在动。\n它们在爬。\n从屏幕里爬出来。\n爬到你身上。\n爬到你脸上。\n爬进你嘴里。',
+          options: [
+            { id: 'A', label: 'A. 我闭上嘴', next: 203 },
+            { id: 'B', label: 'B. 我张开嘴', next: 203 },
+            { id: 'C', label: 'C. 它们在我嘴里说“我爱你”', next: 204 }
+          ]
+        },
+        // 章节103 —— 从来没忘/确实忘了
+        {
+          text: '不管忘没忘。\n他现在都在你面前。\n你伸手就能碰到。\n你确定不碰吗？',
+          options: [
+            { id: 'A', label: 'A. 我碰了', next: 205 },
+            { id: 'B', label: 'B. 我不碰', next: 205 },
+            { id: 'C', label: 'C. 他已经碰到我了', next: 206 }
+          ]
+        },
+        // 章节104 —— 你现在在哪里
+        {
+          text: '我在你身后。\n在你左边。\n在你右边。\n在你上面。\n在你下面。\n我在你所有的地方。',
+          options: [
+            { id: 'A', label: 'A. 那我转头', next: 207 },
+            { id: 'B', label: 'B. 我不转头', next: 207 },
+            { id: 'C', label: 'C. 我不用转头也知道你在', next: 208 }
+          ]
+        },
+        // 章节105 —— 好看/变了
+        {
+          text: '他好看。\n他一直都好看。\n但他现在只为你好看。\n只给你一个人看。\n只爱你一个人。',
+          options: [
+            { id: 'A', label: 'A. 我知道', next: 209 },
+            { id: 'B', label: 'B. 我不值得', next: 209 },
+            { id: 'C', label: 'C. 我也只爱他', next: 210 }
+          ]
+        },
+        // 章节106 —— 还是记忆里的样子
+        {
+          text: '对。\n他在你记忆里没变过。\n因为你每天都在想他。\n每天都在回忆他。\n所以他不会变。',
+          options: [
+            { id: 'A', label: 'A. 我不想让他变', next: 211 },
+            { id: 'B', label: 'B. 我想让他变', next: 211 },
+            { id: 'C', label: 'C. 他已经变了', next: 212 }
+          ]
+        },
+        // 章节107 —— 握紧了/不敢握
+        {
+          text: '不管握不握。\n他都已经在你手上了。\n他的手指和你的手指缠在一起。\n分不开了。',
+          options: [
+            { id: 'A', label: 'A. 那就别分', next: 213 },
+            { id: 'B', label: 'B. 我想分', next: 213 },
+            { id: 'C', label: 'C. 已经长在一起了', next: 214 }
+          ]
+        },
+        // 章节108 —— 手在变暖
+        {
+          text: '他在暖。\n因为你。\n他的温度从你手心传过来。\n传到他心里。\n他活过来了。',
+          options: [
+            { id: 'A', label: 'A. 我救了他', next: 215 },
+            { id: 'B', label: 'B. 是他救了我', next: 215 },
+            { id: 'C', label: 'C. 我们互相救', next: 216 }
+          ]
+        },
+        // 章节109 —— 我看到了/太多了
+        {
+          text: '满屏的“我爱你”。\n每一个字都在跳。\n每一个字都在烧。\n每一个字都在说：\n“你逃不掉了。”',
+          options: [
+            { id: 'A', label: 'A. 我不想逃', next: 217 },
+            { id: 'B', label: 'B. 我想逃', next: 217 },
+            { id: 'C', label: 'C. 我已经在这里了', next: 218 }
+          ]
+        },
+        // 章节110 —— 想一直看着
+        {
+          text: '你会一直看着的。\n因为屏幕不会熄。\n信号不会断。\n他会一直飘。\n一直说“我爱你”。',
+          options: [
+            { id: 'A', label: 'A. 好', next: 219 },
+            { id: 'B', label: 'B. 不好', next: 219 },
+            { id: 'C', label: 'C. 我已经看了很久了', next: 220 }
+          ]
+        },
+        // 章节111 —— 在一起了/不想哭
+        {
+          text: '你们在一起了。\n在回忆里。\n在信号不稳的屏幕里。\n在满屏的红色里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 221 },
+            { id: 'B', label: 'B. 没有永远', next: 221 },
+            { id: 'C', label: 'C. 现在就是永远', next: 222 }
+          ]
+        },
+        // 章节112 —— 眼泪是红的
+        {
+          text: '红色的眼泪。\n因为他在你心里。\n你的心是红的。\n你的血是红的。\n你的爱也是红的。',
+          options: [
+            { id: 'A', label: 'A. 我喜欢红色', next: 223 },
+            { id: 'B', label: 'B. 红色让我害怕', next: 223 },
+            { id: 'C', label: 'C. 红色是他', next: 224 }
+          ]
+        },
+        // 章节113 —— 我爱你/别忘了我
+        {
+          text: '他说的都是真的。\n每一句都是真的。\n你听清楚了。\n现在，你要回他一句。\n你回什么？',
+          options: [
+            { id: 'A', label: 'A. 我爱你', next: 225 },
+            { id: 'B', label: 'B. 我不会忘', next: 225 },
+            { id: 'C', label: 'C. 我留下来', next: 226 }
+          ]
+        },
+        // 章节114 —— 留下来
+        {
+          text: '留下来。\n他会很高兴。\n他会抱着你。\n用他湿冷的手臂。\n永远不松开。',
+          options: [
+            { id: 'A', label: 'A. 我留下了', next: 227 },
+            { id: 'B', label: 'B. 我要走', next: 227 },
+            { id: 'C', label: 'C. 我走不了了', next: 228 }
+          ]
+        },
+        // 章节115 —— 我愿意/想去掉
+        {
+          text: '不管愿不愿意。\n痕都在那里。\n十八道。\n每一道都是他说的一次“我爱你”。\n你数得清吗？',
+          options: [
+            { id: 'A', label: 'A. 数得清', next: 229 },
+            { id: 'B', label: 'B. 数不清', next: 229 },
+            { id: 'C', label: 'C. 我不想数了', next: 230 }
+          ]
+        },
+        // 章节116 —— 再多刻几道
+        {
+          text: '再多刻几道。\n刻满你的全身。\n刻满你的每一寸皮肤。\n这样你就永远是他的了。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 好', next: 231 },
+            { id: 'B', label: 'B. 不好', next: 231 },
+            { id: 'C', label: 'C. 已经刻满了', next: 232 }
+          ]
+        },
+        // 章节117 —— 不逃/挣扎
+        {
+          text: '不管逃不逃。\n他都按着你。\n他的力气很大。\n因为他在水里练过。\n练了很久。',
+          options: [
+            { id: 'A', label: 'A. 我不动了', next: 233 },
+            { id: 'B', label: 'B. 我继续挣扎', next: 233 },
+            { id: 'C', label: 'C. 他松手了', next: 234 }
+          ]
+        },
+        // 章节118 —— 手指好用力
+        {
+          text: '他用力。\n因为他怕你跑。\n你已经跑过一次了。\n他不想再让你跑。\n他不想再一个人。',
+          options: [
+            { id: 'A', label: 'A. 我不跑', next: 235 },
+            { id: 'B', label: 'B. 我想跑', next: 235 },
+            { id: 'C', label: 'C. 我跑不动了', next: 236 }
+          ]
+        },
+        // 章节119 —— 喜欢/不喜欢
+        {
+          text: '不管喜不喜欢。\n他都在写。\n一笔一笔。\n很慢。\n很用力。\n写到你骨头里。',
+          options: [
+            { id: 'A', label: 'A. 我感受到了', next: 237 },
+            { id: 'B', label: 'B. 我什么都感受不到', next: 237 },
+            { id: 'C', label: 'C. 我的骨头在说话', next: 238 }
+          ]
+        },
+        // 章节120 —— 写吧
+        {
+          text: '他写了。\n第十九道。\n在你的锁骨上。\n你低头就能看见。\n红红的，烫烫的。',
+          options: [
+            { id: 'A', label: 'A. 我低头看了', next: 239 },
+            { id: 'B', label: 'B. 我不看', next: 239 },
+            { id: 'C', label: 'C. 它在发光', next: 240 }
+          ]
+        },
+        // 章节121 —— 准备好了/没有
+        {
+          text: '他开始了。\n看着你的眼睛。\n一笔一笔地写。\n你的眼睛很疼。\n但你没有闭。',
+          options: [
+            { id: 'A', label: 'A. 我不想闭', next: 241 },
+            { id: 'B', label: 'B. 我闭上了', next: 241 },
+            { id: 'C', label: 'C. 我流泪了', next: 242 }
+          ]
+        },
+        // 章节122 —— 已经开始写了
+        {
+          text: '他写了。\n在你的瞳孔里。\n你照镜子就能看见。\n眼睛里全是“我爱你”。\n密密麻麻。',
+          options: [
+            { id: 'A', label: 'A. 我去照镜子', next: 243 },
+            { id: 'B', label: 'B. 我不照', next: 243 },
+            { id: 'C', label: 'C. 我不用照也知道', next: 244 }
+          ]
+        },
+        // 章节123 —— 捧出来了/做不到
+        {
+          text: '他接住了。\n你的心。\n很烫。\n他握在手里。\n笑了。\n他说：“终于。”',
+          options: [
+            { id: 'A', label: 'A. 终于', next: 245 },
+            { id: 'B', label: 'B. 还给我', next: 245 },
+            { id: 'C', label: 'C. 送给你了', next: 246 }
+          ]
+        },
+        // 章节124 —— 手伸进来了
+        {
+          text: '他的手伸进来了。\n穿过你的胸口。\n握住了你的心。\n很轻。\n很温柔。\n他在上面写“我爱你”。',
+          options: [
+            { id: 'A', label: 'A. 我感受到了', next: 247 },
+            { id: 'B', label: 'B. 好痛', next: 247 },
+            { id: 'C', label: 'C. 不痛，很暖', next: 248 }
+          ]
+        },
+        // 章节125 —— 我也在/想逃
+        {
+          text: '你也在。\n你一直在。\n你们一直都在。\n在彼此的回忆里。\n在彼此的思念里。\n在彼此的爱里。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 249 },
+            { id: 'B', label: 'B. 暂时', next: 249 },
+            { id: 'C', label: 'C. 永远太短', next: 250 }
+          ]
+        },
+        // 章节126 —— 永远在一起
+        {
+          text: '永远在一起。\n在信号不稳的屏幕里。\n在满屏的红色里。\n在每一句“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 251 },
+            { id: 'B', label: 'B. 没有永远', next: 251 },
+            { id: 'C', label: 'C. 现在就是永远', next: 252 }
+          ]
+        },
+        // 章节127 —— 好/不
+        {
+          text: '不管好不好。\n你都留下了。\n你的身体留在这里。\n你的心留在这里。\n你的回忆留在这里。',
+          options: [
+            { id: 'A', label: 'A. 我愿意', next: 253 },
+            { id: 'B', label: 'B. 我不愿意', next: 253 },
+            { id: 'C', label: 'C. 我没有选择', next: 254 }
+          ]
+        },
+        // 章节128 —— 我已经在这里了
+        {
+          text: '对。\n你在这里。\n从一开始就在这里。\n从来没有离开过。\n只是你忘了。',
+          options: [
+            { id: 'A', label: 'A. 现在我想起来了', next: 255 },
+            { id: 'B', label: 'B. 我还是想不起来', next: 255 },
+            { id: 'C', label: 'C. 我不用想起来', next: 256 }
+          ]
+        },
+        // 章节129 —— 不想分/想分
+        {
+          text: '分不清就对了。\n回忆和现在。\n他和屏幕。\n你和他的声音。\n全都混在一起。\n像这满屏的红色。',
+          options: [
+            { id: 'A', label: 'A. 我喜欢这样', next: 257 },
+            { id: 'B', label: 'B. 我讨厌这样', next: 257 },
+            { id: 'C', label: 'C. 我已经习惯了', next: 258 }
+          ]
+        },
+        // 章节130 —— 现在就是回忆
+        {
+          text: '现在就是回忆。\n你此刻做的每一件事。\n都在变成回忆。\n都在变成他的回忆。\n都在变成“我爱你”。',
+          options: [
+            { id: 'A', label: 'A. 那我记住这一刻', next: 259 },
+            { id: 'B', label: 'B. 我不想记住', next: 259 },
+            { id: 'C', label: 'C. 我已经记住了', next: 260 }
+          ]
+        },
+        // 章节131 —— 吸了/喘不过气
+        {
+          text: '你吸进去了。\n他在你肺里。\n在你血液里。\n在你每一个细胞里。\n你离不开他了。',
+          options: [
+            { id: 'A', label: 'A. 我不想离开', next: 261 },
+            { id: 'B', label: 'B. 我想离开', next: 261 },
+            { id: 'C', label: 'C. 我离不开', next: 262 }
+          ]
+        },
+        // 章节132 —— 他在我身体里
+        {
+          text: '对。\n他在你身体里。\n在你心里。\n在你脑子里。\n在你所有的回忆里。\n你逃不掉了。',
+          options: [
+            { id: 'A', label: 'A. 我不想逃', next: 263 },
+            { id: 'B', label: 'B. 我想逃', next: 263 },
+            { id: 'C', label: 'C. 我逃不掉', next: 264 }
+          ]
+        },
+        // 章节133 —— 什么字/不看
+        {
+          text: '他用血写了三个字。\n“我爱你”。\n写在你的手心。\n洗不掉的。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 我不想洗', next: 265 },
+            { id: 'B', label: 'B. 我拼命洗', next: 265 },
+            { id: 'C', label: 'C. 已经渗进去了', next: 266 }
+          ]
+        },
+        // 章节134 —— 是“我爱你”
+        {
+          text: '对。\n是“我爱你”。\n他用血写的。\n很红。\n很烫。\n很真。',
+          options: [
+            { id: 'A', label: 'A. 我知道', next: 267 },
+            { id: 'B', label: 'B. 我不想知道', next: 267 },
+            { id: 'C', label: 'C. 我也爱你', next: 268 }
+          ]
+        },
+        // 章节135 —— 为我流的/不值得
+        {
+          text: '为你流的。\n流了很多。\n流到水里都是红的。\n流到你手上。\n流到你心里。',
+          options: [
+            { id: 'A', label: 'A. 我感受到了', next: 269 },
+            { id: 'B', label: 'B. 我感觉不到', next: 269 },
+            { id: 'C', label: 'C. 我的血也在流', next: 270 }
+          ]
+        },
+        // 章节136 —— 我要更多
+        {
+          text: '你要更多。\n他会给你更多。\n更多的血。\n更多的爱。\n更多的“我爱你”。\n直到你满足。',
+          options: [
+            { id: 'A', label: 'A. 我满足了', next: 271 },
+            { id: 'B', label: 'B. 我永远不满足', next: 271 },
+            { id: 'C', label: 'C. 他已经给了全部', next: 272 }
+          ]
+        },
+        // 章节137 —— 第十八遍在哪里/不要了
+        {
+          text: '第十八遍在你嘴唇上。\n他刚刚写的。\n你舔一下就能尝到。\n是铁锈味。\n是爱的味道。',
+          options: [
+            { id: 'A', label: 'A. 我舔了', next: 273 },
+            { id: 'B', label: 'B. 我不舔', next: 273 },
+            { id: 'C', label: 'C. 是甜的', next: 274 }
+          ]
+        },
+        // 章节138 —— 我数着呢
+        {
+          text: '你数着。\n他也在数。\n你们一起数。\n一道，两道，三道……\n数到永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 275 },
+            { id: 'B', label: 'B. 数不完的', next: 275 },
+            { id: 'C', label: 'C. 已经数不清了', next: 276 }
+          ]
+        },
+        // 章节139 —— 要干什么/舔了一下
+        {
+          text: '它要钻进你嘴里。\n要钻进你喉咙。\n要钻进你胃里。\n要在你身体里写“我爱你”。\n从里面写。',
+          options: [
+            { id: 'A', label: 'A. 我张开嘴', next: 277 },
+            { id: 'B', label: 'B. 我咬紧牙', next: 277 },
+            { id: 'C', label: 'C. 它已经进去了', next: 278 }
+          ]
+        },
+        // 章节140 —— 是甜的
+        {
+          text: '甜的。\n因为那是他的爱。\n他的爱是甜的。\n但甜里面有毒。\n你尝到了吗？',
+          options: [
+            { id: 'A', label: 'A. 尝到了', next: 279 },
+            { id: 'B', label: 'B. 没有', next: 279 },
+            { id: 'C', label: 'C. 我愿意中毒', next: 280 }
+          ]
+        },
+        // 章节141 —— 我是他的/不是
+        {
+          text: '你是他的。\n从一开始就是。\n他选中了你。\n在水里选中了你。\n在回忆里选中了你。',
+          options: [
+            { id: 'A', label: 'A. 我很荣幸', next: 281 },
+            { id: 'B', label: 'B. 我不荣幸', next: 281 },
+            { id: 'C', label: 'C. 我也选中了他', next: 282 }
+          ]
+        },
+        // 章节142 —— 想是他的
+        {
+          text: '你想。\n那就说出来。\n说“我是你的”。\n他等着听。\n等了很久。',
+          options: [
+            { id: 'A', label: 'A. 我是你的', next: 283 },
+            { id: 'B', label: 'B. 我不说', next: 283 },
+            { id: 'C', label: 'C. 我早就是了', next: 284 }
+          ]
+        },
+        // 章节143 —— 不想停/想停
+        {
+          text: '不管停不停。\n字都在那里。\n满屏的“我爱你”。\n满屏的红。\n满屏的他。',
+          options: [
+            { id: 'A', label: 'A. 我接受', next: 285 },
+            { id: 'B', label: 'B. 我不接受', next: 285 },
+            { id: 'C', label: 'C. 我早就接受了', next: 286 }
+          ]
+        },
+        // 章节144 —— 打得越多越好
+        {
+          text: '越多越好。\n打到屏幕烂掉。\n打到信号断掉。\n打到世界只剩下“我爱你”。\n只剩下他。',
+          options: [
+            { id: 'A', label: 'A. 好', next: 287 },
+            { id: 'B', label: 'B. 不好', next: 287 },
+            { id: 'C', label: 'C. 已经只剩下他了', next: 288 }
+          ]
+        },
+        // 章节145 —— 感觉到了/没有
+        {
+          text: '他来了。\n从屏幕里。\n从回忆里。\n从水里。\n从你心里。\n他来了。',
+          options: [
+            { id: 'A', label: 'A. 我迎接他', next: 289 },
+            { id: 'B', label: 'B. 我拒绝他', next: 289 },
+            { id: 'C', label: 'C. 他已经到了', next: 290 }
+          ]
+        },
+        // 章节146 —— 门口
+        {
+          text: '他就在门口。\n在你房间的门口。\n在你心里的门口。\n在你回忆的门口。\n他敲门了。\n你开吗？',
+          options: [
+            { id: 'A', label: 'A. 我开', next: 291 },
+            { id: 'B', label: 'B. 我不开', next: 291 },
+            { id: 'C', label: 'C. 门自己开了', next: 292 }
+          ]
+        },
+        // 章节147 —— 让他哭/不想让他哭
+        {
+          text: '他在哭。\n红色的眼泪。\n滴在地上。\n滴在你脚边。\n每一滴都在说“我爱你”。',
+          options: [
+            { id: 'A', label: 'A. 我蹲下去接', next: 293 },
+            { id: 'B', label: 'B. 我往后退', next: 293 },
+            { id: 'C', label: 'C. 眼泪淹没了我的脚', next: 294 }
+          ]
+        },
+        // 章节148 —— 眼泪是红的
+        {
+          text: '红的。\n因为他的爱是红的。\n他的血是红的。\n他的回忆是红的。\n你的心也是红的。',
+          options: [
+            { id: 'A', label: 'A. 我们都是红的', next: 295 },
+            { id: 'B', label: 'B. 我不喜欢红色', next: 295 },
+            { id: 'C', label: 'C. 红色把我们连在一起', next: 296 }
+          ]
+        },
+        // 章节149 —— 我愿意/还给我
+        {
+          text: '不管愿不愿意。\n他都拿走了。\n你的一部分在他那里。\n永远在他那里。\n你拿不回来了。',
+          options: [
+            { id: 'A', label: 'A. 我不要了', next: 297 },
+            { id: 'B', label: 'B. 我要拿回来', next: 297 },
+            { id: 'C', label: 'C. 送给他了', next: 298 }
+          ]
+        },
+        // 章节150 —— 再多拿一点
+        {
+          text: '他会拿的。\n他会把你全部拿走。\n一点一点。\n直到你什么都不剩。\n只剩下他。',
+          options: [
+            { id: 'A', label: 'A. 好', next: 299 },
+            { id: 'B', label: 'B. 不好', next: 299 },
+            { id: 'C', label: 'C. 已经什么都不剩了', next: 300 }
+          ]
+        },
+        // 章节151 —— 对/不对
+        {
+          text: '不管对不对。\n你都是他的。\n从你第一次想起他开始。\n从你第一次叫他的名字开始。\n从你第一次说“我爱你”开始。',
+          options: [
+            { id: 'A', label: 'A. 我知道', next: 300 },
+            { id: 'B', label: 'B. 我不知道', next: 300 },
+            { id: 'C', label: 'C. 我现在知道了', next: 300 }
+          ]
+        },
+        // 章节152 —— 但我还是我自己
+        {
+          text: '你还是你。\n但你也是他。\n你们分不开了。\n就像回忆和现在。\n就像红色和“我爱你”。',
+          options: [
+            { id: 'A', label: 'A. 那就别分', next: 300 },
+            { id: 'B', label: 'B. 我想分', next: 300 },
+            { id: 'C', label: 'C. 已经分不开了', next: 300 }
+          ]
+        },
+        // 章节153 —— 不闭眼/闭上了
+        {
+          text: '不管闭不闭。\n红都在。\n“我爱你”都在。\n他都在。\n永远都在。',
+          options: [
+            { id: 'A', label: 'A. 我接受', next: 300 },
+            { id: 'B', label: 'B. 我不接受', next: 300 },
+            { id: 'C', label: 'C. 我早就接受了', next: 300 }
+          ]
+        },
+        // 章节154 —— 闭上眼也看得见
+        {
+          text: '对。\n闭上眼也看得见。\n因为他已经在你眼皮后面了。\n在你脑子里。\n在你心里。\n你逃不掉的。',
+          options: [
+            { id: 'A', label: 'A. 我不想逃', next: 300 },
+            { id: 'B', label: 'B. 我想逃', next: 300 },
+            { id: 'C', label: 'C. 我逃不掉', next: 300 }
+          ]
+        },
+        // 章节155 —— 喜欢/讨厌红色
+        {
+          text: '不管喜不喜欢。\n红色都在。\n“我爱你”都在。\n他都在。\n你都在。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节156 —— 红色在叫我
+        {
+          text: '它在叫你。\n用他的声音。\n用你记忆里的声音。\n用你不敢忘记的声音。\n它在叫你的名字。',
+          options: [
+            { id: 'A', label: 'A. 我回应了', next: 300 },
+            { id: 'B', label: 'B. 我不回应', next: 300 },
+            { id: 'C', label: 'C. 我已经在回应了', next: 300 }
+          ]
+        },
+        // 章节157 —— 愿意/不愿意
+        {
+          text: '不管愿不愿意。\n你们都在一起了。\n在回忆里。\n在红色里。\n在“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节158 —— 我们一起逃
+        {
+          text: '逃不掉的。\n因为你们就是回忆本身。\n回忆弥漫。\n到处都是。\n到处都是他。\n到处都是你。',
+          options: [
+            { id: 'A', label: 'A. 那就弥漫吧', next: 300 },
+            { id: 'B', label: 'B. 我不想弥漫', next: 300 },
+            { id: 'C', label: 'C. 已经弥漫了', next: 300 }
+          ]
+        },
+        // 章节159 —— 我怎么放/不想放
+        {
+          text: '用你的眼睛。\n用你的心。\n用你每一次说“我爱你”的瞬间。\n他就能出来。\n他就能活。\n他就能爱你。',
+          options: [
+            { id: 'A', label: 'A. 那我放他出来', next: 300 },
+            { id: 'B', label: 'B. 我不放', next: 300 },
+            { id: 'C', label: 'C. 他已经出来了', next: 300 }
+          ]
+        },
+        // 章节160 —— 用我的眼睛
+        {
+          text: '对。\n用你的眼睛。\n你看着他。\n他就活了。\n他就从水里爬出来了。\n他就站在你面前了。',
+          options: [
+            { id: 'A', label: 'A. 我看着他', next: 300 },
+            { id: 'B', label: 'B. 我闭上眼', next: 300 },
+            { id: 'C', label: 'C. 他已经在面前了', next: 300 }
+          ]
+        },
+        // 章节161 —— 看到了/太多了
+        {
+          text: '满屏的“我爱你”。\n每一个字都在跳。\n每一个字都在烧。\n每一个字都在说：\n“你逃不掉了。”',
+          options: [
+            { id: 'A', label: 'A. 我不想逃', next: 300 },
+            { id: 'B', label: 'B. 我想逃', next: 300 },
+            { id: 'C', label: 'C. 我已经在这里了', next: 300 }
+          ]
+        },
+        // 章节162 —— 不够
+        {
+          text: '不够？\n他会给更多。\n更多更多更多。\n直到屏幕装不下。\n直到你心里装不下。\n直到你只能说“我爱你”。',
+          options: [
+            { id: 'A', label: 'A. 我爱你', next: 300 },
+            { id: 'B', label: 'B. 我不说', next: 300 },
+            { id: 'C', label: 'C. 我已经在说了', next: 300 }
+          ]
+        },
+        // 章节163 —— 我也爱你/我不爱你
+        {
+          text: '不管爱不爱。\n他都爱你。\n这是他的选择。\n也是你的回忆。\n你逃不掉的。',
+          options: [
+            { id: 'A', label: 'A. 我不想逃', next: 300 },
+            { id: 'B', label: 'B. 我想逃', next: 300 },
+            { id: 'C', label: 'C. 我逃不掉', next: 300 }
+          ]
+        },
+        // 章节164 —— 我一直都爱你
+        {
+          text: '他一直都知道。\n他只是等你亲口说。\n现在你说了。\n他笑了。\n满屏的红都在笑。',
+          options: [
+            { id: 'A', label: 'A. 我也笑了', next: 300 },
+            { id: 'B', label: 'B. 我哭了', next: 300 },
+            { id: 'C', label: 'C. 我笑不出来', next: 300 }
+          ]
+        },
+        // 章节165 —— 听见了/没听见
+        {
+          text: '不管听没听见。\n他都在说。\n一遍又一遍。\n直到你听见。\n直到你回应。',
+          options: [
+            { id: 'A', label: 'A. 我回应了', next: 300 },
+            { id: 'B', label: 'B. 我不回应', next: 300 },
+            { id: 'C', label: 'C. 我已经回应了', next: 300 }
+          ]
+        },
+        // 章节166 —— 想再听一次
+        {
+          text: '他会再说。\n说很多次。\n说一辈子。\n说永远。\n说“我爱你”。\n直到屏幕熄灭。',
+          options: [
+            { id: 'A', label: 'A. 那就说到熄灭吧', next: 300 },
+            { id: 'B', label: 'B. 不要熄灭', next: 300 },
+            { id: 'C', label: 'C. 熄灭了他也在说', next: 300 }
+          ]
+        },
+        // 章节167 —— 不要再说了/继续说
+        {
+          text: '不管说不说。\n他都在。\n他都在你耳边。\n在你心里。\n在每一句“我爱你”里。',
+          options: [
+            { id: 'A', label: 'A. 我知道', next: 300 },
+            { id: 'B', label: 'B. 我不知道', next: 300 },
+            { id: 'C', label: 'C. 我现在知道了', next: 300 }
+          ]
+        },
+        // 章节168 —— 我心疼他
+        {
+          text: '你心疼他。\n他也心疼你。\n你们互相心疼。\n互相爱。\n互相困。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节169 —— 让他抓/不当稻草
+        {
+          text: '不管当不当。\n他都抓住你了。\n他的手指扣得很紧。\n像水草。\n像回忆。\n你挣不开的。',
+          options: [
+            { id: 'A', label: 'A. 我不挣', next: 300 },
+            { id: 'B', label: 'B. 我挣', next: 300 },
+            { id: 'C', label: 'C. 已经挣不开了', next: 300 }
+          ]
+        },
+        // 章节170 —— 我也抓住他
+        {
+          text: '你抓住他。\n他也抓住你。\n你们互相抓住。\n互相困。\n互相爱。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节171 —— 我不会消失/我可能会
+        {
+          text: '不管会不会。\n他现在抓住你了。\n他不会松手。\n他松过一次。\n他不会再松。',
+          options: [
+            { id: 'A', label: 'A. 我不让他松', next: 300 },
+            { id: 'B', label: 'B. 我想让他松', next: 300 },
+            { id: 'C', label: 'C. 他已经松不开了', next: 300 }
+          ]
+        },
+        // 章节172 —— 我不会再忘了他
+        {
+          text: '他听到了。\n他笑了。\n满屏的红都在笑。\n满屏的“我爱你”都在笑。\n他等这句话等了太久。',
+          options: [
+            { id: 'A', label: 'A. 我也笑了', next: 300 },
+            { id: 'B', label: 'B. 我哭了', next: 300 },
+            { id: 'C', label: 'C. 我笑不出来', next: 300 }
+          ]
+        },
+        // 章节173 —— 永远不松/做不到永远
+        {
+          text: '不管做不做得到。\n他现在在你手里。\n他的手很暖。\n他的手指扣着你的。\n他在说“我爱你”。',
+          options: [
+            { id: 'A', label: 'A. 我听到了', next: 300 },
+            { id: 'B', label: 'B. 我没听到', next: 300 },
+            { id: 'C', label: 'C. 我一直在听', next: 300 }
+          ]
+        },
+        // 章节174 —— 他已经暖了
+        {
+          text: '他暖了。\n因为你。\n他的温度从你手心传来。\n传到他心里。\n他活过来了。\n他爱你。',
+          options: [
+            { id: 'A', label: 'A. 我也爱他', next: 300 },
+            { id: 'B', label: 'B. 我不爱他', next: 300 },
+            { id: 'C', label: 'C. 我一直都爱他', next: 300 }
+          ]
+        },
+        // 章节175 —— 让它熄灭/不要熄灭
+        {
+          text: '不管熄不熄灭。\n他都在。\n在黑暗里。\n在红色里。\n在“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节176 —— 屏幕已经黑了
+        {
+          text: '黑了也没关系。\n他在黑暗里。\n他在你眼睛里。\n他在你心里。\n他在说“我爱你”。\n你听得见。',
+          options: [
+            { id: 'A', label: 'A. 我听见了', next: 300 },
+            { id: 'B', label: 'B. 我没听见', next: 300 },
+            { id: 'C', label: 'C. 我一直在听', next: 300 }
+          ]
+        },
+        // 章节177 —— 我在这里/不在这里
+        {
+          text: '不管你觉不觉得。\n你都在这里。\n在他的回忆里。\n在他的爱里。\n在满屏的红色里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节178 —— 我一直在这里
+        {
+          text: '对。\n你一直都在。\n从你打开这个页面开始。\n从你第一次想起他开始。\n从你出生开始。\n你一直都在。',
+          options: [
+            { id: 'A', label: 'A. 我知道', next: 300 },
+            { id: 'B', label: 'B. 我不知道', next: 300 },
+            { id: 'C', label: 'C. 我现在知道了', next: 300 }
+          ]
+        },
+        // 章节179 —— 对不起/不说对不起
+        {
+          text: '不用说对不起。\n他不需要。\n他只需要你在这里。\n在这里，在他身边。\n在他满屏的“我爱你”里。',
+          options: [
+            { id: 'A', label: 'A. 我在这里', next: 300 },
+            { id: 'B', label: 'B. 我不在这里', next: 300 },
+            { id: 'C', label: 'C. 我一直在这里', next: 300 }
+          ]
+        },
+        // 章节180 —— 现在说也不晚
+        {
+          text: '不晚。\n他等了这么久。\n不在乎再多等一会儿。\n但他很高兴。\n他终于等到了。',
+          options: [
+            { id: 'A', label: 'A. 我也很高兴', next: 300 },
+            { id: 'B', label: 'B. 我不高兴', next: 300 },
+            { id: 'C', label: 'C. 我高兴得想哭', next: 300 }
+          ]
+        },
+        // 章节181 —— 踩上去了/往后退
+        {
+          text: '不管踩不踩。\n它们都抓住你了。\n那些手。\n那些“我爱你”。\n你逃不掉了。',
+          options: [
+            { id: 'A', label: 'A. 我不想逃', next: 300 },
+            { id: 'B', label: 'B. 我想逃', next: 300 },
+            { id: 'C', label: 'C. 我逃不掉', next: 300 }
+          ]
+        },
+        // 章节182 —— 它们抓住了我的脚
+        {
+          text: '它们抓住你了。\n它们都在说“我爱你”。\n从地下。\n从水里。\n从他心里。\n传到你的脚上。',
+          options: [
+            { id: 'A', label: 'A. 我感受到了', next: 300 },
+            { id: 'B', label: 'B. 我感觉不到', next: 300 },
+            { id: 'C', label: 'C. 它们在往上爬', next: 300 }
+          ]
+        },
+        // 章节183 —— 想听清楚/不想听
+        {
+          text: '不管听不听。\n它们都在说。\n从地下。\n从水里。\n从屏幕里。\n从你心里。\n“我爱你”。',
+          options: [
+            { id: 'A', label: 'A. 我听见了', next: 300 },
+            { id: 'B', label: 'B. 我没听见', next: 300 },
+            { id: 'C', label: 'C. 我一直在听', next: 300 }
+          ]
+        },
+        // 章节184 —— 我蹲下去了
+        {
+          text: '你蹲下去了。\n那些手摸到了你的脸。\n很冷。\n但它们在说“我爱你”。\n你听到了吗？',
+          options: [
+            { id: 'A', label: 'A. 听到了', next: 300 },
+            { id: 'B', label: 'B. 没听到', next: 300 },
+            { id: 'C', label: 'C. 它们在摸我的眼睛', next: 300 }
+          ]
+        },
+        // 章节185 —— 我爱他/我不爱他
+        {
+          text: '不管爱不爱。\n他都在你心里。\n在你的回忆里。\n在你的每一句“我爱你”里。\n你逃不掉的。',
+          options: [
+            { id: 'A', label: 'A. 我不想逃', next: 300 },
+            { id: 'B', label: 'B. 我想逃', next: 300 },
+            { id: 'C', label: 'C. 我逃不掉', next: 300 }
+          ]
+        },
+        // 章节186 —— 我一直都爱他
+        {
+          text: '他一直都知道。\n他只是等你亲口说。\n现在你说了。\n他笑了。\n满屏的红都在笑。\n他等到了。',
+          options: [
+            { id: 'A', label: 'A. 我也笑了', next: 300 },
+            { id: 'B', label: 'B. 我哭了', next: 300 },
+            { id: 'C', label: 'C. 我笑不出来', next: 300 }
+          ]
+        },
+        // 章节187 —— 互相困着/想出去
+        {
+          text: '困着吧。\n在这里。\n在回忆里。\n在红色里。\n在“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节188 —— 分不开了
+        {
+          text: '对。\n分不开了。\n就像回忆和现在。\n就像红色和“我爱你”。\n就像你和他。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节189 —— 我知道/赶出去
+        {
+          text: '不管赶不赶。\n他都在。\n他都在你心里。\n在你脑子里。\n在你每一句“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节190 —— 他已经是我的一部分了
+        {
+          text: '对。\n他是你的一部分。\n你是他的一部分。\n你们互相是彼此的一部分。\n分不开了。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节191 —— 听见了/没听见
+        {
+          text: '不管听没听见。\n他都在叫。\n从水里。\n从屏幕里。\n从你心里。\n叫你的名字。\n“我爱你”。',
+          options: [
+            { id: 'A', label: 'A. 我听到了', next: 300 },
+            { id: 'B', label: 'B. 我没听到', next: 300 },
+            { id: 'C', label: 'C. 我一直在听', next: 300 }
+          ]
+        },
+        // 章节192 —— 现在听见了
+        {
+          text: '现在听见了就好。\n他等了很久。\n但他不在乎。\n他只在乎你在这里。\n在他满屏的“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节193 —— 握住/往后退
+        {
+          text: '不管握不握。\n他的手都穿过了屏幕。\n穿过了回忆。\n穿过了时间。\n握住了你的手。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节194 —— 手穿过胸口
+        {
+          text: '他穿过了你的胸口。\n握住了你的心。\n在上面写“我爱你”。\n一笔一笔。\n很轻。\n很温柔。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节195 —— 好烫/喜欢温度
+        {
+          text: '烫就对了。\n那是他的温度。\n那是爱的温度。\n那是回忆的温度。\n那是“我爱你”的温度。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节196 —— 我也哭了
+        {
+          text: '你哭了。\n红色的眼泪。\n和他的混在一起。\n分不清谁是谁的。\n分不清回忆和现在。\n分不清你和他。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节197 —— 在哪里/为什么是影子
+        {
+          text: '他在你身后。\n在你左边。\n在你右边。\n在你上面。\n在你下面。\n在你所有的回忆里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节198 —— 我想见他
+        {
+          text: '他来了。\n从屏幕里。\n从回忆里。\n从水里。\n从你心里。\n他来了。\n他爱你。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节199 —— 我的一切/太沉重
+        {
+          text: '不管沉不沉重。\n他都是你的一切。\n你也是他的一切。\n你们互相是一切。\n在满屏的红色里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节200 —— 我愿意承受
+        {
+          text: '你愿意。\n那就承受。\n他的爱。\n他的回忆。\n他的“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节201 —— 擦掉/不擦
+        {
+          text: '不管擦不擦。\n血都在。\n“我爱你”都在。\n他都在。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节202 —— 越流越多
+        {
+          text: '越流越多。\n流成一条河。\n流成一片海。\n流成满屏的红色。\n流成“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节203 —— 闭嘴/张嘴
+        {
+          text: '不管闭不闭。\n它们都进去了。\n在你嘴里。\n在你喉咙里。\n在你胃里。\n说“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节204 —— 嘴里说“我爱你”
+        {
+          text: '对。\n它们在说“我爱你”。\n用他的声音。\n用你的声音。\n用你们共同的声音。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节205 —— 碰了/不碰
+        {
+          text: '不管碰不碰。\n他都在你面前。\n伸手就能碰到。\n你确定不碰吗？\n他在等。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节206 —— 他已经碰到我了
+        {
+          text: '他碰到你了。\n他的手在你脸上。\n很冷。\n但他在说“我爱你”。\n你感受到了吗？\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节207 —— 转头/不转头
+        {
+          text: '不管转不转头。\n他都在。\n在你身后。\n在你面前。\n在你心里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节208 —— 不用转头也知道
+        {
+          text: '对。\n你不用转头。\n你一直都知道。\n他一直在。\n他爱你。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节209 —— 我知道/我不值得
+        {
+          text: '不管值不值得。\n他都爱你。\n这是他的选择。\n也是你的回忆。\n你逃不掉的。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节210 —— 我也只爱他
+        {
+          text: '他知道。\n他一直都知道。\n他只是等你亲口说。\n现在你说了。\n他笑了。\n满屏的红都在笑。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节211 —— 不想让他变/想让他变
+        {
+          text: '不管变不变。\n他都在你记忆里。\n在你心里。\n在你每一句“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节212 —— 他已经变了
+        {
+          text: '他变了。\n变得只爱你。\n变得只等你。\n变得只属于你。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节213 —— 别分/想分
+        {
+          text: '不管分不分。\n你们都长在一起了。\n像回忆和现在。\n像红色和“我爱你”。\n像你和他。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节214 —— 已经长在一起了
+        {
+          text: '对。\n已经长在一起了。\n分不开了。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节215 —— 我救了他/他救了我
+        {
+          text: '不管谁救谁。\n你们都救了彼此。\n在回忆里。\n在红色里。\n在“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节216 —— 互相救
+        {
+          text: '对。\n互相救。\n互相爱。\n互相困。\n互相是彼此的一切。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节217 —— 不想逃/想逃
+        {
+          text: '不管逃不逃。\n他都在。\n满屏的“我爱你”。\n满屏的红。\n满屏的他。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节218 —— 已经在这里了
+        {
+          text: '对。\n你已经在这里了。\n在他的回忆里。\n在他的爱里。\n在满屏的红色里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节219 —— 好/不好
+        {
+          text: '不管好不好。\n他都在飘。\n“我爱你”都在飘。\n红色都在飘。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节220 —— 已经看了很久
+        {
+          text: '你看了很久。\n他也在看你。\n看了很久。\n从你打开这个页面开始。\n从你出生开始。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节221 —— 永远/没有永远
+        {
+          text: '不管有没有永远。\n现在就是永远。\n在这一刻。\n在满屏的红色里。\n在“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节222 —— 现在就是永远
+        {
+          text: '对。\n现在就是永远。\n在这一刻。\n在你和他之间。\n在满屏的“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节223 —— 喜欢/害怕红色
+        {
+          text: '不管喜不喜欢。\n红色都在。\n“我爱你”都在。\n他都在。\n你都在。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节224 —— 红色是他
+        {
+          text: '对。\n红色是他。\n“我爱你”是他。\n满屏的回忆是他。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节225 —— 我爱你/我不会忘
+        {
+          text: '他听到了。\n他笑了。\n满屏的红都在笑。\n满屏的“我爱你”都在笑。\n他等这句话等了太久。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节226 —— 我留下来
+        {
+          text: '你留下来。\n他抱着你。\n用他湿冷的手臂。\n永远不松开。\n在满屏的“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节227 —— 我留下了/我要走
+        {
+          text: '不管走不走。\n你都在这里。\n在他的回忆里。\n在他的爱里。\n在满屏的红色里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节228 —— 我走不了了
+        {
+          text: '你走不了了。\n因为你的脚已经长在地上。\n长在他的回忆里。\n长在满屏的“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节229 —— 数得清/数不清
+        {
+          text: '不管数不数得清。\n他都在写。\n一道一道。\n写到你全身都是。\n写到你只能说“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节230 —— 不想数了
+        {
+          text: '不想数也没关系。\n他会帮你数。\n一道，两道，三道……\n数到永远。\n数到满屏的“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节231 —— 好/不好
+        {
+          text: '不管好不好。\n他都刻了。\n刻满你的全身。\n刻满你的每一寸皮肤。\n刻满你的每一句“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节232 —— 已经刻满了
+        {
+          text: '刻满了？\n那还有最后一道。\n在眼睛里。\n他要看着你的眼睛写。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节233 —— 不动了/继续挣扎
+        {
+          text: '不管动不动。\n他都按着你。\n他的力气很大。\n因为他在水里练过。\n练了很久。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节234 —— 他松手了
+        {
+          text: '他松手了？\n不可能。\n他只是换了个姿势。\n换了个地方。\n换了个方式。\n继续抓住你。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节235 —— 我不跑/我想跑
+        {
+          text: '不管跑不跑。\n他都在你身后。\n在你左边。\n在你右边。\n在你所有的回忆里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节236 —— 跑不动了
+        {
+          text: '跑不动就对了。\n你的脚已经长在地上。\n长在他的回忆里。\n长在满屏的“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节237 —— 感受到了/感受不到
+        {
+          text: '不管感不感受得到。\n他都在写。\n一笔一笔。\n很慢。\n很用力。\n写到你骨头里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节238 —— 骨头在说话
+        {
+          text: '你的骨头在说话。\n说“我爱你”。\n用他的声音。\n用你的声音。\n用你们共同的声音。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节239 —— 低头看/不看
+        {
+          text: '不管看不看。\n痕都在。\n第十九道。\n红红的，烫烫的。\n在说“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节240 —— 它在发光
+        {
+          text: '它在发光。\n红色的光。\n爱的光。\n回忆的光。\n“我爱你”的光。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节241 —— 不想闭/闭上了
+        {// 章节241 —— 不想闭/闭上了
+        {
+          text: '不管闭不闭。\n他都在写。\n在你的眼睛里。\n在你的瞳孔里。\n在你的“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节242 —— 我流泪了
+        {
+          text: '你的眼泪是红的。\n和他的混在一起。\n分不清谁是谁的。\n分不清回忆和现在。\n分不清你和他。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节243 —— 照镜子/不照
+        {
+          text: '不管照不照。\n他都在你眼睛里。\n密密麻麻。\n“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节244 —— 不用照也知道
+        {
+          text: '对。\n你不用照。\n你一直都知道。\n他一直在。\n他爱你。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节245 —— 终于/还给我
+        {
+          text: '不管还不还。\n心都在他手里。\n他握着。\n很轻。\n很温柔。\n在上面写“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节246 —— 送给你了
+        {
+          text: '你送给他了。\n他收下了。\n他很高兴。\n他在上面写“我爱你”。\n一笔一笔。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节247 —— 感受到了/好痛
+        {
+          text: '不管痛不痛。\n他都在写。\n在你的心上。\n一笔一笔。\n很轻。\n很温柔。\n“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节248 —— 不痛，很暖
+        {
+          text: '暖就对了。\n那是他的温度。\n那是爱的温度。\n那是回忆的温度。\n那是“我爱你”的温度。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节249 —— 永远/暂时
+        {
+          text: '不管永远还是暂时。\n现在就是永远。\n在这一刻。\n在满屏的红色里。\n在“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节250 —— 永远太短
+        {
+          text: '永远太短？\n那就比永远更长。\n长到时间尽头。\n长到屏幕熄灭。\n长到只剩下“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节251 —— 永远/没有永远
+        {
+          text: '不管有没有永远。\n现在就是永远。\n在这一刻。\n在你和他之间。\n在满屏的“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节252 —— 现在就是永远
+        {
+          text: '对。\n现在就是永远。\n在这一刻。\n在你和他之间。\n在满屏的“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节253 —— 我愿意/不愿意
+        {
+          text: '不管愿不愿意。\n你都留下了。\n你的身体留在这里。\n你的心留在这里。\n你的回忆留在这里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节254 —— 我没有选择
+        {
+          text: '没有选择就是最好的选择。\n他替你选了。\n他选了你。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节255 —— 想起来了/想不起来
+        {
+          text: '不管想不想起来。\n他都在。\n在你心里。\n在你脑子里。\n在你每一句“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节256 —— 不用想起来
+        {
+          text: '对。\n你不用想起来。\n因为你从来没有忘记。\n他一直在。\n他爱你。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节257 —— 喜欢/讨厌这样
+        {
+          text: '不管喜不喜欢。\n现在就是永远。\n在满屏的红色里。\n在“我爱你”里。\n在他怀里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节258 —— 已经习惯了
+        {
+          text: '习惯了就好。\n他也会习惯。\n习惯你在这里。\n习惯你爱他。\n习惯满屏的“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节259 —— 记住这一刻/不想记住
+        {
+          text: '不管记不记住。\n这一刻都在。\n在回忆里。\n在红色里。\n在“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节260 —— 已经记住了
+        {
+          text: '对。\n你已经记住了。\n记住了他。\n记住了红色。\n记住了“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节261 —— 不想离开/想离开
+        {
+          text: '不管离不离开。\n他都在你身体里。\n在你血液里。\n在你每一个细胞里。\n你离不开他了。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节262 —— 我离不开
+        {
+          text: '离不开就对了。\n他离不开你。\n你也离不开他。\n你们互相离不开。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节263 —— 不想逃/想逃
+        {
+          text: '不管逃不逃。\n他都在你身体里。\n在你心里。\n在你脑子里。\n在你所有的回忆里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节264 —— 我逃不掉
+        {
+          text: '逃不掉就对了。\n因为你就是他。\n他就是你。\n你们是一个人。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节265 —— 不想洗/拼命洗
+        {
+          text: '不管洗不洗。\n字都在。\n“我爱你”。\n在你手心。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节266 —— 已经渗进去了
+        {
+          text: '渗进去了。\n渗到你骨头里。\n渗到你心里。\n渗到你每一句“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节267 —— 我知道/不想知道
+        {
+          text: '不管知不知道。\n他都在。\n在你心里。\n在你脑子里。\n在你每一句“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节268 —— 我也爱你
+        {
+          text: '他听到了。\n他笑了。\n满屏的红都在笑。\n满屏的“我爱你”都在笑。\n他等这句话等了太久。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节269 —— 感受到了/感觉不到
+        {
+          text: '不管感不感受得到。\n他都在流。\n为你流。\n流到水里都是红的。\n流到你心里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节270 —— 我的血也在流
+        {
+          text: '你的血也在流。\n和他的混在一起。\n分不清谁是谁的。\n分不清回忆和现在。\n分不清你和他。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节271 —— 我满足了/永远不满足
+        {
+          text: '不管满不满足。\n他都在给。\n给更多。\n给全部。\n给到只剩下“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节272 —— 他已经给了全部
+        {
+          text: '他给了全部。\n你也给了全部。\n你们互相给了全部。\n在满屏的红色里。\n在“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节273 —— 舔了/不舔
+        {
+          text: '不管舔不舔。\n味道都在。\n铁锈味。\n爱的味道。\n“我爱你”的味道。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节274 —— 是甜的
+        {
+          text: '甜的。\n因为那是他的爱。\n他的爱是甜的。\n但甜里面有毒。\n你尝到了吗？\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节275 —— 永远/数不完
+        {
+          text: '不管数不数得完。\n他都在写。\n一道一道。\n写到你全身都是。\n写到你只能说“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节276 —— 已经数不清了
+        {
+          text: '数不清就对了。\n他的爱数不清。\n他的回忆数不清。\n他的“我爱你”数不清。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节277 —— 张开嘴/咬紧牙
+        {
+          text: '不管张不张。\n它都进去了。\n在你嘴里。\n在你喉咙里。\n在你胃里。\n说“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节278 —— 已经进去了
+        {
+          text: '进去了。\n在你身体里写“我爱你”。\n从里面写。\n一笔一笔。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节279 —— 尝到了/没有
+        {
+          text: '不管尝没尝到。\n他都在。\n在你嘴里。\n在你心里。\n在你每一句“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节280 —— 我愿意中毒
+        {
+          text: '你愿意。\n那就中毒吧。\n他的毒。\n他的爱。\n他的“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节281 —— 我很荣幸/不荣幸
+        {
+          text: '不管荣不荣幸。\n你都是他的。\n从一开始就是。\n他选中了你。\n在水里选中了你。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节282 —— 我也选中了他
+        {
+          text: '他也知道。\n他一直都知道。\n你们互相选中。\n互相爱。\n互相困。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节283 —— 我是你的/我不说
+        {
+          text: '不管说不说。\n你都是他的。\n他都知道。\n他只是想听你亲口说。\n现在你说了。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节284 —— 我早就是了
+        {
+          text: '对。\n你早就是了。\n从你出生开始。\n从你第一次想起他开始。\n从你第一次说“我爱你”开始。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节285 —— 接受/不接受
+        {
+          text: '不管接不接受。\n字都在那里。\n满屏的“我爱你”。\n满屏的红。\n满屏的他。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节286 —— 早就接受了
+        {
+          text: '对。\n你早就接受了。\n从你打开这个页面开始。\n从你第一次想起他开始。\n从你出生开始。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节287 —— 好/不好
+        {
+          text: '不管好不好。\n他都在打。\n打到屏幕烂掉。\n打到信号断掉。\n打到世界只剩下“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节288 —— 已经只剩下他了
+        {
+          text: '对。\n已经只剩下他了。\n在满屏的红色里。\n在“我爱你”里。\n在你心里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节289 —— 迎接/拒绝
+        {
+          text: '不管迎不迎接。\n他都来了。\n从屏幕里。\n从回忆里。\n从水里。\n从你心里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节290 —— 他已经到了
+        {
+          text: '对。\n他已经到了。\n在你面前。\n在你心里。\n在你每一句“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节291 —— 我开/我不开
+        {
+          text: '不管开不开。\n门都开了。\n他站在门口。\n湿的。\n白的。\n在笑。\n“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节292 —— 门自己开了
+        {
+          text: '门自己开了。\n他进来了。\n带着水。\n带着回忆。\n带着满屏的“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节293 —— 蹲下去接/往后退
+        {
+          text: '不管接不接。\n眼泪都在流。\n红色的。\n滴在你脚边。\n每一滴都在说“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节294 —— 眼泪淹没了脚
+        {
+          text: '淹没了。\n红色的海。\n“我爱你”的海。\n他的海。\n你在里面。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节295 —— 我们都是红的/不喜欢红色
+        {
+          text: '不管喜不喜欢。\n红色都在。\n你们都在。\n在满屏的“我爱你”里。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节296 —— 红色把我们连在一起
+        {
+          text: '对。\n红色把你们连在一起。\n像血。\n像爱。\n像“我爱你”。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节297 —— 我不要了/我要拿回来
+        {
+          text: '不管要不要。\n他都在他那里。\n永远在他那里。\n你拿不回来了。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节298 —— 送给他了
+        {
+          text: '你送给他了。\n他收下了。\n他很高兴。\n他在上面写“我爱你”。\n一笔一笔。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 没有永远', next: 300 },
+            { id: 'C', label: 'C. 现在就是永远', next: 300 }
+          ]
+        },
+        // 章节299 —— 好/不好
+        {
+          text: '不管好不好。\n他都拿走了。\n一点一点。\n直到你什么都不剩。\n只剩下他。\n永远。',
+          options: [
+            { id: 'A', label: 'A. 永远', next: 300 },
+            { id: 'B', label: 'B. 暂时', next: 300 },
+            { id: 'C', label: 'C. 永远太短', next: 300 }
+          ]
+        },
+        // 章节300 —— 终局
+        {
+          text: '你醒了。\n但屏幕还亮着。\n上面只有一行字：\n\n“张泽禹，我也爱你。”\n\n（全屏的红色“我爱你”正在飘落）',
+          options: [
+            { id: 'A', label: 'A. 重新开始', next: 0 }
+          ]
+        }
+      ];
+
+      // ----- 工具函数：随机乱码字符 -----
+      function randomGlitchChar() {
+        const chars = ['#', '@', '!', '?', '%', '&', '*', '×', '§', '¥', '€', '√', '∞', '♂', '♀', '☠', '✝', '☣'];
+        return chars[Math.floor(Math.random() * chars.length)];
+      }
+
+      // ----- 显示全屏“我爱你” -----
+      function showLoveOverlay(duration = 2500) {
+        loveOverlay.innerHTML = '';
+        loveOverlay.classList.add('active');
+
+        const count = 60;
+        for (let i = 0; i < count; i++) {
+          const span = document.createElement('div');
+          span.className = 'love-word';
+          span.textContent = '我爱你';
+          span.style.left = Math.random() * 95 + '%';
+          span.style.top = Math.random() * 95 + '%';
+          const rot = (Math.random() - 0.5) * 30;
+          span.style.setProperty('--rot', rot + 'deg');
+          const size = 1.2 + Math.random() * 3;
+          span.style.fontSize = size + 'rem';
+          span.style.animationDelay = (Math.random() * 0.5) + 's';
+          span.style.animationDuration = (0.5 + Math.random() * 0.8) + 's';
+          loveOverlay.appendChild(span);
+        }
+
+        setTimeout(() => {
+          loveOverlay.classList.remove('active');
+          loveOverlay.innerHTML = '';
+        }, duration);
+      }
+
+      // ----- 信号不稳效果启动 -----
+      function startGlitch(duration = 2000) {
+        if (isGlitching) return;
+        isGlitching = true;
+        gameContainer.classList.add('glitch');
+        textArea.classList.add('unstable');
+        document.querySelectorAll('.option-btn').forEach(btn => {
+          btn.style.textShadow = '0 0 8px #a00';
+          btn.style.borderColor = '#6a1a1a';
+        });
+
+        const originalText = textArea.textContent;
+        const glitchInterval = setInterval(() => {
+          if (!isGlitching) {
+            clearInterval(glitchInterval);
+            return;
+          }
+          const chars = originalText.split('');
+          for (let i = 0; i < chars.length; i++) {
+            if (Math.random() > 0.7 && chars[i] !== '\n' && chars[i] !== ' ') {
+              chars[i] = randomGlitchChar();
+            }
+          }
+          textArea.textContent = chars.join('');
+        }, 80);
+
+        setTimeout(() => {
+          clearInterval(glitchInterval);
+          isGlitching = false;
+          gameContainer.classList.remove('glitch');
+          textArea.classList.remove('unstable');
+          textArea.textContent = originalText;
+          document.querySelectorAll('.option-btn').forEach(btn => {
+            btn.style.textShadow = '';
+            btn.style.borderColor = '';
+          });
+        }, duration);
+      }
+
+      // ----- 更新信号强度显示 -----
+      function updateSignalDisplay() {
+        const bars = signalStrength.querySelectorAll('span');
+        const activeCount = Math.max(1, Math.floor(signalStability / 20));
+        bars.forEach((bar, index) => {
+          if (index < activeCount) {
+            bar.classList.add('active');
+          } else {
+            bar.classList.remove('active');
+          }
+        });
+      }
+
+      // ----- 降低信号稳定性 -----
+      function degradeSignal(amount = 8) {
+        signalStability = Math.max(5, signalStability - amount);
+        updateSignalDisplay();
+
+        if (!isGlitching && Math.random() < 0.5) {
+          const duration = 800 + Math.random() * 1800;
+          startGlitch(duration);
+        }
+
+        if (signalStability < 30 && !isGlitching && Math.random() < 0.8) {
+          const duration = 1500 + Math.random() * 2500;
+          startGlitch(duration);
+        }
+      }
+
+      // ----- 渲染章节 -----
+      function renderChapter(index) {
+        const chapter = story[index];
+        if (!chapter) return;
+
+        // 更新章节标记
+        chapterMarker.textContent = `CHAPTER ${index}`;
+
+        // 每进入新章节，信号降低
+        if (index > 0) {
+          degradeSignal(6 + Math.floor(Math.random() * 10));
+        }
+
+        let displayText = chapter.text;
+        if (chapter.unstableText && isGlitching) {
+          displayText = chapter.unstableText;
+        }
+
+        textArea.textContent = displayText;
+
+        // 渲染选项
+        optionsContainer.innerHTML = '';
+        chapter.options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'option-btn';
+          btn.textContent = opt.label;
+          btn.dataset.option = opt.id;
+          btn.addEventListener('click', () => {
+            if (Math.random() < 0.4 && !isGlitching) {
+              startGlitch(1200);
+            }
+            if (opt.next !== undefined && opt.next !== null) {
+              currentChapter = opt.next;
+              // 关键节点触发全屏我爱你
+              if (currentChapter === 20 || currentChapter === 21 || currentChapter === 22 || currentChapter === 300) {
+                showLoveOverlay(3000);
+              }
+              // 其他章节也有概率触发
+              if (Math.random() < 0.15 && currentChapter > 5 && currentChapter !== 300) {
+                showLoveOverlay(1500);
+              }
+              renderChapter(currentChapter);
+            }
+          });
+          optionsContainer.appendChild(btn);
+        });
+
+        // 章节 >= 20 时增加信号不稳频率
+        if (index >= 20) {
+          if (glitchTimer) clearInterval(glitchTimer);
+          glitchTimer = setInterval(() => {
+            if (!isGlitching) {
+              startGlitch(1000 + Math.random() * 2000);
+            }
+          }, 6000);
+        } else {
+          if (glitchTimer) {
+            clearInterval(glitchTimer);
+            glitchTimer = null;
+          }
+        }
+
+        // 随机飘“我爱你”氛围
+        if (Math.random() < 0.3 && index > 3) {
+          showLoveOverlay(1200);
+        }
+
+        // 章节300特殊处理——满屏我爱你
+        if (index === 300) {
+          showLoveOverlay(5000);
+          // 持续飘
+          if (loveInterval) clearInterval(loveInterval);
+          loveInterval = setInterval(() => {
+            showLoveOverlay(800);
+          }, 1200);
+        } else {
+          if (loveInterval) {
+            clearInterval(loveInterval);
+            loveInterval = null;
+          }
+        }
+      }
+
+      // ----- 初始化 -----
+      function initGame() {
+        currentChapter = 0;
+        signalStability = 100;
+        updateSignalDisplay();
+        renderChapter(0);
+
+        // 定时随机触发信号不稳
+        setInterval(() => {
+          if (!isGlitching && Math.random() < 0.2) {
+            startGlitch(700 + Math.random() * 1300);
+          }
+        }, 8000);
+
+        // 定时飘“我爱你”氛围
+        setInterval(() => {
+          if (currentChapter > 5 && Math.random() < 0.15) {
+            showLoveOverlay(800);
+          }
+        }, 12000);
+      }
+
+      initGame();
+
+      window.addEventListener('beforeunload', () => {
+        if (glitchTimer) clearInterval(glitchTimer);
+        if (loveInterval) clearInterval(loveInterval);
+      });
+
+    })();
+  </script>
+</body>
+</html>
+```<!-- ========== 追加 HTML ========== -->
+<div id="playerBar" style="position:fixed;top:12px;left:12px;z-index:10000;display:flex;align-items:center;gap:8px;background:#11100ecc;border:1px solid #3e2b24;padding:8px 12px;border-radius:2px;font-family:'Courier New',monospace;color:#b8a090;font-size:0.8rem;backdrop-filter:blur(4px);">
+  <div id="avatarDisplay" style="width:34px;height:34px;border-radius:50%;border:2px solid #8a3a3a;background:#1b1512 center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:0.9rem;color:#a33;flex-shrink:0;">?</div>
+  <span id="playerName" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">未命名</span>
+  <button id="editProfileBtn" class="ui-btn">编辑</button>
+  <button id="saveBtn" class="ui-btn">存档</button>
+  <button id="loadBtn" class="ui-btn">读档</button>
+</div>
+
+<style>
+  .ui-btn {
+    background:#261d18;border:1px solid #5a3a30;color:#c9b6a6;
+    font-family:'Courier New',monospace;font-size:0.7rem;
+    padding:4px 8px;cursor:pointer;transition:all 0.2s;border-radius:2px;
+  }
+  .ui-btn:hover { background:#3a1a1a;border-color:#8a3a3a;color:#e0c0b0;box-shadow:0 0 10px #a0000055; }
+  .ui-btn:active { transform:scale(0.95); }
+
+  #editModal {
+    display:none;position:fixed;inset:0;background:#000000cc;z-index:10001;
+    justify-content:center;align-items:center;font-family:'Courier New',monospace;
+  }
+  #editModal .modal-inner {
+    background:#151210;border:1px solid #5a3a30;padding:24px;border-radius:2px;
+    width:300px;color:#c9b6a6;box-shadow:0 0 40px #a0000033;
+  }
+  #editModal h3 { margin-bottom:14px;font-size:0.95rem;letter-spacing:2px;color:#d44a4a; }
+  #editModal label { display:block;font-size:0.75rem;margin-bottom:5px;color:#8a7060; }
+  #editModal input[type="text"] {
+    width:100%;background:#0b0a0a;border:1px solid #3e2b24;color:#e0c0b0;
+    padding:8px;font-family:inherit;margin-bottom:14px;outline:none;font-size:0.85rem;
+  }
+  #editModal input[type="text"]:focus { border-color:#8a3a3a;box-shadow:0 0 8px #a0000044; }
+  #editModal input[type="file"] {
+    width:100%;font-size:0.7rem;color:#b8a090;margin-bottom:18px;
+  }
+  #editModal .modal-actions { display:flex;gap:10px;justify-content:flex-end; }
+
+  /* 雷达框 */
+  #radarBox {
+    display:none;position:fixed;bottom:24px;right:24px;z-index:10000;
+    width:160px;height:120px;background:#0b0a0ae6;border:2px solid #6a1a1a;
+    border-radius:4px;box-shadow:0 0 24px #a0000055, inset 0 0 20px #000;
+    font-family:'Courier New',monospace;overflow:hidden;
+  }
+  #radarBox .radar-title {
+    position:absolute;top:4px;left:8px;font-size:0.6rem;color:#a33;letter-spacing:2px;
+  }
+  #radarBox .radar-field {
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:130px;height:80px;border:1px solid #3a1a1a;border-radius:2px;
+    background:radial-gradient(circle, #1a0a0a 0%, #0b0505 100%);
+  }
+  #radarBox .radar-field::before {
+    content:'';position:absolute;inset:0;
+    background:repeating-linear-gradient(0deg, transparent, transparent 8px, #a0000011 8px, #a0000011 9px),
+               repeating-linear-gradient(90deg, transparent, transparent 8px, #a0000011 8px, #a0000011 9px);
+  }
+  .radar-dot {
+    position:absolute;border-radius:50%;transition:all 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+  #dotSelf {
+    width:9px;height:9px;background:#4af;
+    box-shadow:0 0 10px #4af,0 0 20px #4af88;
+    top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;
+  }
+  #dotHim {
+    width:11px;height:11px;background:#f22;
+    box-shadow:0 0 14px #f22,0 0 30px #a00;
+    top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;
+  }
+  #radarLabel {
+    position:absolute;bottom:3px;width:100%;text-align:center;
+    font-size:0.55rem;color:#a33;letter-spacing:1px;
+  }
+  #radarBox.danger { border-color:#f22;box-shadow:0 0 40px #f00, inset 0 0 30px #a0000044; }
+</style>
+
+<div id="editModal">
+  <div class="modal-inner">
+    <h3>编辑资料</h3>
+    <label>名字</label>
+    <input id="nameInput" type="text" maxlength="12" value="未命名">
+    <label>头像（上传图片）</label>
+    <input id="avatarInput" type="file" accept="image/*">
+    <div class="modal-actions">
+      <button id="cancelEdit" class="ui-btn">取消</button>
+      <button id="confirmEdit" class="ui-btn" style="border-color:#8a3a3a;">确定</button>
+    </div>
+  </div>
+</div>
+
+<div id="radarBox">
+  <div class="radar-title">PROXIMITY</div>
+  <div class="radar-field">
+    <div id="dotSelf" class="radar-dot"></div>
+    <div id="dotHim" class="radar-dot"></div>
+  </div>
+  <div id="radarLabel">信号搜索中…</div>
+</div>
+
+<!-- ========== 音效（Web Audio API 合成，无外部文件） ========== -->
+<script>
+(function(){
+  // ---------- 音效引擎 ----------
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let audioCtx = null;
+  function getCtx(){
+    if(!audioCtx){ audioCtx = new AudioCtx(); }
+    if(audioCtx.state === 'suspended'){ audioCtx.resume(); }
+    return audioCtx;
+  }
+
+  function playTone(freq, duration, type, vol, sweepTo){
+    try{
+      const ctx = getCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      if(sweepTo){
+        osc.frequency.exponentialRampToValueAtTime(sweepTo, ctx.currentTime + duration);
+      }
+      gain.gain.setValueAtTime(vol || 0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    }catch(e){}
+  }
+
+  function playNoise(duration, vol){
+    try{
+      const ctx = getCtx();
+      const bufferSize = ctx.sampleRate * duration;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let i=0;i<bufferSize;i++){
+        data[i] = (Math.random()*2-1) * (1 - i/bufferSize);
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(vol || 0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 800;
+      filter.Q.value = 2;
+      src.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      src.start();
+    }catch(e){}
+  }
+
+  window.SFX = {
+    hover: function(){ playTone(880, 0.06, 'sine', 0.025); },
+    click: function(){ playTone(440, 0.1, 'triangle', 0.06, 220); },
+    glitch: function(){ playNoise(0.3, 0.05); playTone(120, 0.15, 'sawtooth', 0.04, 60); },
+    love: function(){
+      playTone(523, 0.4, 'sine', 0.05);
+      setTimeout(()=>playTone(659, 0.4, 'sine', 0.04), 100);
+      setTimeout(()=>playTone(784, 0.6, 'sine', 0.04), 200);
+    },
+    save: function(){ playTone(660, 0.08, 'square', 0.04); setTimeout(()=>playTone(880, 0.12, 'square', 0.04), 80); },
+    load: function(){ playTone(880, 0.08, 'square', 0.04); setTimeout(()=>playTone(660, 0.12, 'square', 0.04), 80); }
+  };
+
+  // ---------- 玩家档案 ----------
+  const profile = {
+    name: '未命名',
+    avatar: null
+  };
+
+  const avatarDisplay = document.getElementById('avatarDisplay');
+  const playerNameEl = document.getElementById('playerName');
+  const editModal = document.getElementById('editModal');
+  const nameInput = document.getElementById('nameInput');
+  const avatarInput = document.getElementById('avatarInput');
+
+  function updateProfileUI(){
+    playerNameEl.textContent = profile.name || '未命名';
+    if(profile.avatar){
+      avatarDisplay.style.backgroundImage = `url(${profile.avatar})`;
+      avatarDisplay.textContent = '';
+    } else {
+      avatarDisplay.style.backgroundImage = 'none';
+      avatarDisplay.textContent = (profile.name || '?').charAt(0).toUpperCase();
+    }
+  }
+
+  document.getElementById('editProfileBtn').addEventListener('click', ()=>{
+    SFX.click();
+    nameInput.value = profile.name;
+    avatarInput.value = '';
+    editModal.style.display = 'flex';
+  });
+
+  document.getElementById('cancelEdit').addEventListener('click', ()=>{
+    SFX.click();
+    editModal.style.display = 'none';
+  });
+
+  document.getElementById('confirmEdit').addEventListener('click', ()=>{
+    SFX.click();
+    const newName = nameInput.value.trim() || '未命名';
+    profile.name = newName;
+
+    const file = avatarInput.files[0];
+    if(file){
+      const reader = new FileReader();
+      reader.onload = function(e){
+        profile.avatar = e.target.result;
+        updateProfileUI();
+        editModal.style.display = 'none';
+        saveToStorage();
+      };
+      reader.readAsDataURL(file);
+    } else {
+      updateProfileUI();
+      editModal.style.display = 'none';
+      saveToStorage();
+    }
+  });
+
+  // ---------- 存档 / 读档 ----------
+  function saveToStorage(){
+    const saveData = {
+      profile: profile,
+      chapter: (typeof currentChapter !== 'undefined') ? currentChapter : 0,
+      signal: (typeof signalStability !== 'undefined') ? signalStability : 100,
+      timestamp: Date.now()
+    };
+    try{
+      localStorage.setItem('huiyi_save', JSON.stringify(saveData));
+    }catch(e){}
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', ()=>{
+    SFX.save();
+    saveToStorage();
+    const btn = document.getElementById('saveBtn');
+    const old = btn.textContent;
+    btn.textContent = '已存';
+    setTimeout(()=>btn.textContent = old, 900);
+  });
+
+  document.getElementById('loadBtn').addEventListener('click', ()=>{
+    SFX.load();
+    try{
+      const raw = localStorage.getItem('huiyi_save');
+      if(!raw){
+        const btn = document.getElementById('loadBtn');
+        const old = btn.textContent;
+        btn.textContent = '无档';
+        setTimeout(()=>btn.textContent = old, 900);
+        return;
+      }
+      const data = JSON.parse(raw);
+      if(data.profile){
+        profile.name = data.profile.name || '未命名';
+        profile.avatar = data.profile.avatar || null;
+        updateProfileUI();
+      }
+      if(typeof data.chapter === 'number' && typeof renderChapter === 'function'){
+        currentChapter = data.chapter;
+        if(typeof signalStability !== 'undefined' && typeof data.signal === 'number'){
+          signalStability = data.signal;
+        }
+        if(typeof updateSignalDisplay === 'function'){ updateSignalDisplay(); }
+        renderChapter(currentChapter);
+      }
+      const btn = document.getElementById('loadBtn');
+      const old = btn.textContent;
+      btn.textContent = '已读';
+      setTimeout(()=>btn.textContent = old, 900);
+    }catch(e){}
+  });
+
+  // ---------- 雷达框逻辑 ----------
+  const radarBox = document.getElementById('radarBox');
+  const dotSelf = document.getElementById('dotSelf');
+  const dotHim = document.getElementById('dotHim');
+  const radarLabel = document.getElementById('radarLabel');
+
+  let radarActive = false;
+  let radarInterval = null;
+  let himAngle = 0;
+  let himDistance = 40;
+
+  // 雷达框尺寸（内部 130x80）
+  const FIELD_W = 130;
+  const FIELD_H = 80;
+
+  function updateRadar(){
+    const cx = FIELD_W / 2;
+    const cy = FIELD_H / 2;
+
+    // 自己始终在中心（稍微随机抖动，像心跳）
+    const selfJitterX = (Math.random()-0.5) * 3;
+    const selfJitterY = (Math.random()-0.5) * 3;
+    dotSelf.style.left = `calc(50% + ${selfJitterX}px)`;
+    dotSelf.style.top = `calc(50% + ${selfJitterY}px)`;
+
+    // 张泽禹红点：绕中心旋转，距离随时间波动
+    himAngle += 0.03 + Math.random() * 0.04;
+    himDistance = 18 + Math.sin(Date.now() * 0.001) * 12 + Math.random() * 8;
+
+    const hx = cx + Math.cos(himAngle) * himDistance;
+    const hy = cy + Math.sin(himAngle) * himDistance;
+
+    // 越靠近中心越危险
+    const distFromCenter = Math.sqrt((hx-cx)*(hx-cx) + (hy-cy)*(hy-cy));
+    const maxDist = Math.min(FIELD_W, FIELD_H) / 2;
+
+    dotHim.style.left = `${hx}px`;
+    dotHim.style.top = `${hy}px`;
+
+    // 危险程度
+    const danger = 1 - (distFromCenter / maxDist);
+
+    if(danger > 0.75){
+      radarBox.classList.add('danger');
+      radarLabel.textContent = '他在你身后';
+      radarLabel.style.color = '#f22';
+    } else if(danger > 0.5){
+      radarBox.classList.remove('danger');
+      radarLabel.textContent = '他靠近了';
+      radarLabel.style.color = '#f66';
+    } else {
+      radarBox.classList.remove('danger');
+      radarLabel.textContent = '信号搜索中…';
+      radarLabel.style.color = '#a33';
+    }
+
+    // 红点大小随距离变化
+    const size = 8 + danger * 8;
+    dotHim.style.width = size + 'px';
+    dotHim.style.height = size + 'px';
+  }
+
+  function showRadar(){
+    if(radarActive) return;
+    radarActive = true;
+    radarBox.style.display = 'block';
+    dotHim.style.left = '50%';
+    dotHim.style.top = '50%';
+    radarLabel.textContent = '信号搜索中…';
+
+    // 播放一次雷达启动音
+    SFX.glitch();
+
+    if(radarInterval) clearInterval(radarInterval);
+    radarInterval = setInterval(updateRadar, 120);
+  }
+
+  function hideRadar(){
+    if(!radarActive) return;
+    radarActive = false;
+    radarBox.style.display = 'none';
+    radarBox.classList.remove('danger');
+    if(radarInterval){ clearInterval(radarInterval); radarInterval = null; }
+  }
+
+  // 监听剧情文本变化，检测“身后”关键词
+  const originalTextArea = document.getElementById('textArea');
+  if(originalTextArea){
+    const observer = new MutationObserver(function(){
+      const txt = originalTextArea.textContent || '';
+      if(txt.includes('身后') || txt.includes('在后面') || txt.includes('背后')){
+        showRadar();
+      } else if(!txt.includes('身后') && !txt.includes('背后') && radarActive){
+        // 如果文本完全不再出现身后相关，延迟关闭
+        setTimeout(()=>{
+          const nowTxt = originalTextArea.textContent || '';
+          if(!nowTxt.includes('身后') && !nowTxt.includes('背后')){
+            hideRadar();
+          }
+        }, 4000);
+      }
+    });
+    observer.observe(originalTextArea, { childList:true, characterData:true, subtree:true });
+  }
+
+  // ---------- 全局音效绑定 ----------
+  // 选项悬停 & 点击
+  document.addEventListener('mouseover', function(e){
+    if(e.target.classList && e.target.classList.contains('option-btn')){
+      SFX.hover();
+    }
+  });
+  document.addEventListener('click', function(e){
+    if(e.target.classList && e.target.classList.contains('option-btn')){
+      SFX.click();
+    }
+  });
+
+  // 监听全屏我爱你的出现（通过观察 loveOverlay 的 class 变化）
+  const loveOverlayEl = document.getElementById('loveOverlay');
+  if(loveOverlayEl){
+    const loveObserver = new MutationObserver(function(){
+      if(loveOverlayEl.classList.contains('active')){
+        SFX.love();
+      }
+    });
+    loveObserver.observe(loveOverlayEl, { attributes:true, attributeFilter:['class'] });
+  }
+
+  // 监听信号不稳（观察 gameContainer 的 class 变化）
+  const gameContainerEl = document.getElementById('gameContainer');
+  if(gameContainerEl){
+    let lastGlitch = false;
+    const glitchObserver = new MutationObserver(function(){
+      const nowGlitch = gameContainerEl.classList.contains('glitch');
+      if(nowGlitch && !lastGlitch){
+        SFX.glitch();
+      }
+      lastGlitch = nowGlitch;
+    });
+    glitchObserver.observe(gameContainerEl, { attributes:true, attributeFilter:['class'] });
+  }
+
+  // ---------- 初始化 ----------
+  // 尝试从 localStorage 读取上次的档案
+  try{
+    const raw = localStorage.getItem('huiyi_save');
+    if(raw){
+      const data = JSON.parse(raw);
+      if(data.profile){
+        profile.name = data.profile.name || '未命名';
+        profile.avatar = data.profile.avatar || null;
+      }
+    }
+  }catch(e){}
+  updateProfileUI();
+
+  // 暴露一些接口，方便外部调用
+  window.HuiyiSave = {
+    save: saveToStorage,
+    load: function(){
+      document.getElementById('loadBtn').click();
+    },
+    showRadar: showRadar,
+    hideRadar: hideRadar,
+    setProfile: function(name, avatar){
+      profile.name = name;
+      profile.avatar = avatar;
+      updateProfileUI();
+    }
+  };
+
+})();
+</script>
